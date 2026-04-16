@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Sidekick — Team</title>
+<style>
+:root{
+  --bg:rgba(8,4,20,.96);--panel:rgba(16,8,35,.97);--card:rgba(255,255,255,.04);
+  --border:rgba(255,255,255,.08);--purple:#7c3aed;--purple-lt:#a78bfa;
+  --purple-dim:rgba(124,58,237,.2);--text:#e5e7eb;--dim:#6b7280;
+  --green:#4ade80;--red:#f87171;--gold:#fbbf24;--blue:#60a5fa;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',sans-serif;background:transparent;
+  color:var(--text);width:1550px;height:900px;overflow:hidden;
+  display:grid;grid-template-columns:420px 1fr 420px;
+}
+/* ── PANEL ── */
+.panel{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-l{border-radius:14px 0 0 14px;border-right:none}
+.panel-r{border-radius:0 14px 14px 0;border-left:none}
+.panel-c{background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ph{
+  padding:10px 14px 8px;font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--purple-lt);text-transform:uppercase;border-bottom:1px solid var(--border);
+  background:var(--purple-dim);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.close-btn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px}
+.close-btn:hover{color:var(--red)}
+/* ── PLAYER CARD ── */
+.players{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:5px}
+.players::-webkit-scrollbar{width:3px}
+.players::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.pcard{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.pcard:hover{border-color:var(--purple);background:var(--purple-dim)}
+.pcard.is-me{border-color:rgba(124,58,237,.45)}
+.role-icon{width:18px;height:18px;opacity:.6;font-size:14px;text-align:center;flex-shrink:0}
+.champ-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--border);object-fit:cover;flex-shrink:0}
+.champ-icon-ph{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px dashed var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dim)}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psub{font-size:10px;color:var(--dim);margin-top:1px}
+.pstats{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.rank-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+.r-IRON{background:rgba(107,114,128,.25);color:#9ca3af}
+.r-BRONZE{background:rgba(146,64,14,.25);color:#d97706}
+.r-SILVER{background:rgba(200,200,200,.15);color:#d1d5db}
+.r-GOLD{background:rgba(217,119,6,.25);color:#fbbf24}
+.r-PLATINUM{background:rgba(5,150,105,.25);color:#34d399}
+.r-EMERALD{background:rgba(16,185,129,.25);color:#6ee7b7}
+.r-DIAMOND{background:rgba(59,130,246,.25);color:#93c5fd}
+.r-MASTER{background:rgba(124,58,237,.25);color:#c4b5fd}
+.r-GRANDMASTER{background:rgba(220,38,38,.25);color:#fca5a5}
+.r-CHALLENGER{background:rgba(234,179,8,.25);color:#fde047}
+.r-UNRANKED{background:rgba(75,85,99,.25);color:#6b7280}
+.wr-line{font-size:10px;color:var(--dim)}
+.wr-g{color:var(--green)}.wr-b{color:var(--red)}
+/* ── CENTER ── */
+.c-scroll{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.c-scroll::-webkit-scrollbar{width:4px}
+.c-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.sec-label{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--purple-lt);text-transform:uppercase;margin-bottom:6px}
+/* Win bar */
+.wbar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--purple-dim);border-radius:10px;border:1px solid rgba(124,58,237,.3)}
+.wbar-pct{font-size:16px;font-weight:800;min-width:40px}
+.wbar-ally{color:var(--blue)}.wbar-enemy{color:#f97316;text-align:right}
+.wbar-track{flex:1;height:8px;background:rgba(249,115,22,.3);border-radius:4px;overflow:hidden}
+.wbar-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .6s}
+/* Matchup rows */
+.matchup-list{display:flex;flex-direction:column;gap:5px}
+.matchup-row{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--card);border:1px solid var(--border);border-radius:7px;font-size:11px;
+}
+.matchup-champ{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+.matchup-champ img{width:24px;height:24px;border-radius:50%;border:1px solid var(--border)}
+.matchup-champ span{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs-sep{color:var(--dim);font-size:10px;flex-shrink:0;width:20px;text-align:center}
+.matchup-wr{font-weight:700;min-width:36px;text-align:right}
+.wr-adv{color:var(--green)}.wr-dis{color:var(--red)}.wr-neu{color:var(--gold)}
+/* Profile panel */
+.profile-panel{
+  position:absolute;top:0;right:0;bottom:0;width:460px;
+  background:rgba(10,5,25,.98);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:10;
+  transform:translateX(100%);transition:transform .25s;
+}
+.profile-panel.open{transform:translateX(0)}
+.profile-header{
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  background:var(--purple-dim);display:flex;align-items:center;gap:10px;
+}
+.profile-back{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;margin-right:4px}
+.profile-back:hover{color:var(--text)}
+.profile-name{font-size:14px;font-weight:700;flex:1}
+.profile-rank{font-size:11px;color:var(--dim)}
+.profile-scroll{flex:1;overflow-y:auto;padding:10px}
+.profile-scroll::-webkit-scrollbar{width:3px}
+.profile-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.most-played{margin-bottom:12px}
+.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.mp-item{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px;text-align:center}
+.mp-item img{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);margin-bottom:3px}
+.mp-item .mp-name{font-size:9px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-item .mp-stats{font-size:9px;font-weight:700;color:var(--blue)}
+/* Match history */
+.match-row{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;
+  background:var(--card);border-radius:6px;margin-bottom:4px;
+  border-left:3px solid var(--border);font-size:11px;
+}
+.match-row.win{border-left-color:var(--green)}.match-row.loss{border-left-color:var(--red)}
+.match-champ img{width:28px;height:28px;border-radius:50%}
+.match-info{flex:1;min-width:0}
+.match-kda{font-weight:700}.match-meta{font-size:9px;color:var(--dim);margin-top:1px}
+.match-wr-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.badge-win{background:rgba(74,222,128,.15);color:var(--green)}
+.badge-loss{background:rgba(241,113,113,.15);color:var(--red)}
+/* Misc */
+.loading-txt{color:var(--dim);font-size:11px;font-style:italic;padding:12px 0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(124,58,237,.3);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LEFT: Ally team -->
+<div class="panel panel-l" style="position:relative">
+  <div class="ph">⚡ tvůj tým <button class="close-btn" onclick="closeMe()">✕</button></div>
+  <div class="players" id="ally-list"><p class="loading-txt"><span class="spinner"></span>Načítám...</p></div>
+  <!-- Profile panel (slides in) -->
+  <div class="profile-panel" id="profile-panel">
+    <div class="profile-header">
+      <button class="profile-back" onclick="closeProfile()">←</button>
+      <div>
+        <div class="profile-name" id="profile-name">—</div>
+        <div class="profile-rank" id="profile-rank">—</div>
+      </div>
+    </div>
+    <div class="profile-scroll" id="profile-scroll">
+      <p class="loading-txt"><span class="spinner"></span>Načítám profil...</p>
+    </div>
+  </div>
+</div>
+
+<!-- CENTER -->
+<div class="panel panel-c" style="position:relative">
+  <div class="ph" style="justify-content:center">sidekick — team stats</div>
+  <div class="c-scroll">
+
+    <div>
+      <div class="wbar" id="wbar">
+        <span class="wbar-pct wbar-ally" id="w-ally">—%</span>
+        <div style="flex:1">
+          <div class="wbar-track"><div class="wbar-fill" id="w-fill" style="width:50%"></div></div>
+          <div style="font-size:9px;color:var(--dim);text-align:center;margin-top:3px;letter-spacing:1px">šance na výhru</div>
+        </div>
+        <span class="wbar-pct wbar-enemy" id="w-enemy">—%</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">matchup analýza</div>
+      <div class="matchup-list" id="matchup-list">
+        <p class="loading-txt"><span class="spinner"></span>Počítám matchupy...</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label" id="ai-label">ai analýza</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;color:var(--dim);line-height:1.6" id="ai-box">
+        <span class="spinner"></span>Analyzuji...
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RIGHT: Enemy team -->
+<div class="panel panel-r">
+  <div class="ph">nepřátelé</div>
+  <div class="players" id="enemy-list"><p class="loading-txt"><span class="spinner"></span>Načítám...</p></div>
+</div>
+
+<script src="team_overlay.js"></script>
+</body>
+</html>

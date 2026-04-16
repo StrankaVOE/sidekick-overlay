@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Sidekick</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg:      #0a0a10;
+  --surface: #111118;
+  --card:    #16161f;
+  --border:  rgba(255,255,255,0.07);
+  --text:    #e2e2e8;
+  --sub:     #52526a;
+  --green:   #34d399;
+  --red:     #f87171;
+  --gold:    #fbbf24;
+  --game-color: #14b8a6;
+  --game-glow:  rgba(20,184,166,0.15);
+  
+  /* Rank colors */
+  --rank-iron: #6B7280;
+  --rank-bronze: #B45309;
+  --rank-silver: #9CA3AF;
+  --rank-gold: #F59E0B;
+  --rank-platinum: #22D3EE;
+  --rank-emerald: #10B981;
+  --rank-diamond: #3B82F6;
+  --rank-master: #9333EA;
+  --rank-grandmaster: #EF4444;
+  --rank-challenger-1: #38BDF8;
+  --rank-challenger-2: #A78BFA;
+  --rank-challenger-3: #F472B6;
+}
+
+/* Light mode */
+[data-theme="light"] {
+  --bg:      #f8f9fc;
+  --surface: #ffffff;
+  --card:    #f0f2f7;
+  --border:  rgba(0,0,0,0.08);
+  --text:    #1a1a2e;
+  --sub:     #6b6b80;
+  --green:   #059669;
+  --red:     #dc2626;
+  --gold:    #d97706;
+}
+
+[data-theme="light"] .wbtn { color: #6b6b80; }
+[data-theme="light"] .wbtn:hover { background: rgba(0,0,0,.06); color: #1a1a2e; }
+[data-theme="light"] .wbtn.close:hover { background: rgba(220,38,38,.1); color: #dc2626; }
+[data-theme="light"] .game-tab:hover { background: rgba(0,0,0,.04); }
+[data-theme="light"] .game-tab.active { background: var(--game-glow); }
+[data-theme="light"] .tab-img { filter: brightness(.8) saturate(.7); }
+[data-theme="light"] .game-tab:hover .tab-img, [data-theme="light"] .game-tab.active .tab-img { filter: brightness(1) saturate(1); }
+[data-theme="light"] .riot-tab-icon { filter: brightness(.8) saturate(.7); }
+[data-theme="light"] .game-tab:hover .riot-tab-icon, [data-theme="light"] .game-tab.active .riot-tab-icon { filter: brightness(1) saturate(1); }
+[data-theme="light"] .tog { background: #d1d5db; }
+[data-theme="light"] .tog.on { background: var(--game-color); }
+[data-theme="light"] .p-avatar { border-color: var(--game-color); background: #f0f2f7; }
+[data-theme="light"] .match:hover { background: rgba(0,0,0,.03); }
+[data-theme="light"] .tft-match { background: rgba(0,0,0,.02); }
+[data-theme="light"] .chart-bar { background: var(--gold); }
+[data-theme="light"] #content::-webkit-scrollbar-thumb { background: #ccc; }
+[data-theme="light"] .settings-select { background: #f0f2f7; border-color: #d1d5db; color: #1a1a2e; }
+[data-theme="light"] #search-overlay { background: rgba(248,249,252,.98); }
+[data-theme="light"] #settings-overlay { background: rgba(248,249,252,.98); }
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100vh; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:13px; overflow:hidden; display:flex; flex-direction:column; user-select:none; }
+
+/* Titlebar - HIDDEN, only window controls in nav */
+#titlebar { display:none; }
+#logo { display:none; }
+#logo-icon { display:none; }
+#titlebar-btns { display:none; }
+.wbtn { width:32px; height:32px; border:none; background:rgba(255,255,255,.05); color:var(--sub); cursor:pointer; border-radius:8px; font-size:14px; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+.wbtn:hover { background:rgba(255,255,255,.12); color:var(--text); }
+.wbtn.close:hover { background:rgba(248,113,113,.2); color:#f87171; }
+.wbtn.settings:hover { background:var(--game-glow); color:var(--game-color); }
+
+/* Nav - with window controls on right */
+#game-nav { display:flex; align-items:center; background:var(--surface); border-bottom:1px solid var(--border); padding:0 10px; gap:4px; flex-shrink:0; height:48px; -webkit-app-region:drag; }
+.game-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 12px; border-radius:8px; cursor:pointer; transition:all .2s; position:relative; min-width:50px; flex-shrink:0; border:1px solid transparent; -webkit-app-region:no-drag; }
+.game-tab:hover { background:rgba(255,255,255,.05); }
+.game-tab.active { background:var(--game-glow); border-color:rgba(255,255,255,.06); }
+.game-tab.active::after { content:''; position:absolute; bottom:-1px; left:20%; right:20%; height:2px; background:var(--game-color); border-radius:2px 2px 0 0; }
+.tab-img { width:28px; height:28px; border-radius:6px; object-fit:cover; transition:transform .2s; filter:brightness(.65) saturate(.5); }
+.game-tab:hover .tab-img, .game-tab.active .tab-img { filter:brightness(1) saturate(1); transform:scale(1.05); }
+.riot-tab-icon { width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,#e32636,#c0392b); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:900; color:#fff; transition:transform .2s; filter:brightness(.65) saturate(.5); }
+.game-tab:hover .riot-tab-icon, .game-tab.active .riot-tab-icon { filter:brightness(1) saturate(1); transform:scale(1.05); }
+.tab-label { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sub); transition:color .2s; white-space:nowrap; }
+.game-tab.active .tab-label { color:var(--game-color); }
+.live-dot { position:absolute; top:4px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.nav-spacer { flex:1; }
+.nav-div { width:1px; height:28px; background:var(--border); flex-shrink:0; margin:0 6px; }
+.nav-controls { display:flex; gap:6px; align-items:center; -webkit-app-region:no-drag; }
+
+/* Main Layout */
+#main-wrapper { flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; }
+
+/* Rank Background */
+#rank-bg { position:absolute; top:0; right:0; width:350px; height:250px; opacity:0.12; pointer-events:none; z-index:0; background-size:contain; background-repeat:no-repeat; background-position:top right; }
+
+/* Content */
+#content { flex:1; overflow-y:auto; overflow-x:hidden; padding:16px; display:flex; flex-direction:column; gap:12px; position:relative; z-index:1; }
+#content::-webkit-scrollbar { width:4px; }
+#content::-webkit-scrollbar-thumb { background:#333; border-radius:2px; }
+
+/* Profile Section with centered rank emblem */
+#profile-section { display:flex; align-items:center; gap:14px; padding:14px; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid var(--border); position:relative; overflow:hidden; }
+.profile-rank-emblem { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:180px; height:180px; opacity:0.25; pointer-events:none; z-index:0; }
+.profile-rank-emblem img { width:100%; height:100%; object-fit:contain; }
+
+/* Avatar with rank border */
+.p-avatar { 
+  width:64px; height:64px; border-radius:12px; flex-shrink:0; 
+  background:var(--surface); 
+  display:flex; align-items:center; justify-content:center; 
+  font-size:26px; overflow:hidden; position:relative;
+  border:3px solid var(--game-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.p-avatar img { width:100%; height:100%; object-fit:cover; border-radius:9px; }
+.p-online { position:absolute; bottom:-2px; right:-2px; width:14px; height:14px; background:var(--green); border:2px solid var(--bg); border-radius:50%; }
+
+/* Rank-specific avatar styles */
+.p-avatar.rank-iron { border-color: var(--rank-iron); }
+.p-avatar.rank-bronze { border-color: var(--rank-bronze); box-shadow: 0 0 12px rgba(180,83,9,0.3); }
+.p-avatar.rank-silver { border-color: var(--rank-silver); box-shadow: 0 0 12px rgba(156,163,175,0.3); }
+.p-avatar.rank-gold { border-color: var(--rank-gold); box-shadow: 0 0 15px rgba(245,158,11,0.4); }
+.p-avatar.rank-platinum { border-color: var(--rank-platinum); box-shadow: 0 0 18px rgba(34,211,238,0.4); }
+.p-avatar.rank-emerald { border-color: var(--rank-emerald); box-shadow: 0 0 18px rgba(16,185,129,0.4); }
+.p-avatar.rank-diamond { 
+  border-color: var(--rank-diamond); 
+  box-shadow: 0 0 20px rgba(59,130,246,0.5);
+  background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1));
+}
+.p-avatar.rank-master { 
+  border-color: var(--rank-master); 
+  box-shadow: 0 0 22px rgba(147,51,234,0.5);
+}
+.p-avatar.rank-grandmaster { 
+  border-color: var(--rank-grandmaster); 
+  box-shadow: 0 0 25px rgba(239,68,68,0.6);
+  animation: gm-pulse 2s infinite;
+}
+@keyframes gm-pulse {
+  0%,100% { box-shadow: 0 0 25px rgba(239,68,68,0.6); }
+  50% { box-shadow: 0 0 35px rgba(239,68,68,0.8); }
+}
+.p-avatar.rank-challenger { 
+  border: 3px solid transparent;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              linear-gradient(135deg, var(--rank-challenger-1), var(--rank-challenger-2), var(--rank-challenger-3)) border-box;
+  box-shadow: 0 0 30px rgba(164,127,250,0.5);
+  animation: challenger-glow 3s infinite;
+}
+@keyframes challenger-glow {
+  0% { box-shadow: 0 0 25px rgba(56,189,248,0.5); }
+  33% { box-shadow: 0 0 30px rgba(167,139,250,0.6); }
+  66% { box-shadow: 0 0 30px rgba(244,114,182,0.5); }
+  100% { box-shadow: 0 0 25px rgba(56,189,248,0.5); }
+}
+
+.p-info { flex:1; min-width:0; }
+.p-name { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--text); line-height:1.1; }
+.p-rank { font-size:12px; color:var(--sub); margin-top:3px; }
+.p-conn { font-size:10px; margin-top:4px; display:flex; align-items:center; gap:5px; color:var(--green); }
+.p-conn-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s infinite; }
+.p-actions { display:flex; gap:8px; }
+.p-action-btn { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; font-size:16px; color:var(--sub); }
+.p-action-btn:hover { background:var(--game-glow); border-color:var(--game-color); color:var(--game-color); }
+
+/* Stats Row */
+.stats-row { display:flex; gap:10px; }
+.stat-box { flex:1; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; }
+.stat-val { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; line-height:1; }
+.stat-val.g { color:var(--green); }
+.stat-val.r { color:var(--red); }
+.stat-val.y { color:var(--gold); }
+.stat-lbl { font-size:10px; color:var(--sub); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* Chart + Stats Section - side by side */
+.chart-section { display:flex; gap:12px; }
+.chart-box { flex:1; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; min-height:140px; }
+.chart-bars { display:flex; align-items:flex-end; justify-content:space-between; height:90px; gap:6px; padding:0 8px; }
+.chart-bar { flex:1; background:var(--gold); border-radius:3px 3px 0 0; min-height:6px; transition:height .3s; position:relative; }
+.chart-bar:hover { filter:brightness(1.2); }
+.chart-bar::after { content:attr(data-count); position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--sub); opacity:0; transition:opacity .2s; }
+.chart-bar:hover::after { opacity:1; }
+.chart-labels { display:flex; justify-content:space-between; margin-top:8px; padding:0 8px; }
+.chart-label { font-size:10px; color:var(--sub); font-weight:600; }
+.chart-stats { display:flex; flex-direction:column; gap:8px; min-width:130px; }
+.chart-stat { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center; }
+.chart-stat-val { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; color:var(--gold); }
+.chart-stat-lbl { font-size:10px; color:var(--sub); margin-top:3px; }
+
+/* Features Card */
+.features-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.features-hd { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--sub); margin-bottom:10px; }
+.feat { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.feat:last-child { border-bottom:none; }
+.feat-name { font-size:12px; font-weight:500; color:var(--text); display:flex; align-items:center; gap:6px; }
+.feat-desc { font-size:10px; color:var(--sub); margin-top:2px; }
+.spam-status { font-size:9px; font-weight:600; padding:2px 6px; background:rgba(255,255,255,0.08); border-radius:4px; }
+.spam-status.queue { color:var(--green); }
+.spam-status.lobby { color:var(--gold); }
+.spam-status.waiting { color:var(--sub); }
+.tog { width:36px; height:20px; background:#1e1e2a; border-radius:10px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; border:1px solid rgba(255,255,255,.06); }
+.tog.on { background:var(--game-color); border-color:transparent; }
+.tog-knob { width:14px; height:14px; background:#fff; border-radius:50%; position:absolute; top:2px; left:2px; transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.4); }
+.tog.on .tog-knob { left:18px; }
+
+/* Match History - Full Width */
+.match-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.match-hd { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--sub); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.scan-btn { font-size:9px; padding:4px 10px; border-radius:6px; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--sub); cursor:pointer; transition:all .15s; }
+.scan-btn:hover { color:var(--text); background:rgba(255,255,255,.1); }
+
+/* Match History Items */
+.match { display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; margin-bottom:6px; border-left:3px solid transparent; transition:background .12s; }
+.match:hover { background:rgba(255,255,255,.03); }
+.match.win { border-left-color:var(--green); }
+.match.loss { border-left-color:var(--red); }
+.match-icon { width:32px; height:32px; border-radius:6px; flex-shrink:0; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; overflow:hidden; }
+.match-icon img { width:100%; height:100%; object-fit:cover; }
+.match-info { flex:1; min-width:0; }
+.match-title { font-size:12px; font-weight:600; color:var(--text); }
+.match-meta { font-size:10px; color:var(--sub); }
+.match-res { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; }
+.match-res.win { color:var(--green); }
+.match-res.loss { color:var(--red); }
+.match-loading { color:var(--sub); font-size:11px; font-style:italic; padding:8px 0; }
+
+/* TFT Match */
+.tft-match { display:flex; gap:12px; padding:10px; background:rgba(255,255,255,.02); border-radius:8px; margin-bottom:8px; }
+.tft-placement { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:800; width:32px; text-align:center; }
+.tft-details { flex:1; min-width:0; }
+.tft-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.tft-mode { font-size:10px; color:var(--sub); }
+.tft-time { font-size:9px; color:var(--sub); }
+.tft-units { display:flex; gap:4px; flex-wrap:wrap; }
+.tft-unit { width:26px; height:26px; border-radius:4px; background:var(--surface); border:1px solid var(--border); overflow:hidden; position:relative; }
+.tft-unit img { width:100%; height:100%; object-fit:cover; }
+.tft-unit.legendary { border-color:#ffb93b; }
+.tft-unit.epic { border-color:#c440da; }
+.tft-unit.rare { border-color:#207ac7; }
+.unit-stars { position:absolute; bottom:0; left:0; right:0; font-size:6px; text-align:center; background:rgba(0,0,0,.7); color:#ffd700; }
+
+/* Status bar - hidden */
+#status-bar { display:none; }
+
+/* Settings Modal */
+#settings-overlay { position:fixed; inset:0; z-index:200; background:rgba(10,10,16,.95); display:none; flex-direction:column; padding:20px; }
+#settings-overlay.open { display:flex; }
+.settings-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.settings-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; color:var(--text); }
+.settings-close { width:32px; height:32px; background:none; border:none; color:var(--sub); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.settings-close:hover { background:rgba(248,113,113,.15); color:#f87171; }
+.settings-section { margin-bottom:20px; }
+.settings-label { font-size:11px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.settings-option { display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; }
+.settings-option-name { font-size:13px; color:var(--text); }
+.settings-select { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 12px; color:var(--text); font-size:12px; cursor:pointer; }
+.settings-select:focus { outline:none; border-color:var(--game-color); }
+
+/* Search Overlay */
+#search-overlay { position:fixed; inset:0; z-index:100; background:rgba(10,10,16,.97); display:none; flex-direction:column; }
+#search-overlay.open { display:flex; }
+.search-header { padding:14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.search-input-wrap { flex:1; display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0 10px; }
+.search-input-wrap:focus-within { border-color:var(--game-color); }
+#search-input { flex:1; background:none; border:none; outline:none; color:var(--text); font-size:13px; padding:8px 0; font-family:'Inter',sans-serif; }
+#search-input::placeholder { color:var(--sub); }
+.search-close { width:28px; height:28px; background:none; border:none; color:var(--sub); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.search-close:hover { background:rgba(248,113,113,.15); color:#f87171; }
+#search-results { flex:1; overflow-y:auto; padding:10px; }
+.search-result { display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer; transition:background .12s; margin-bottom:4px; }
+.search-result:hover { background:var(--game-glow); }
+.search-empty { text-align:center; padding:30px; color:var(--sub); font-size:12px; }
+
+/* Riot Tab */
+.riot-section { padding:16px; }
+.dna-wrap { display:flex; flex-direction:column; gap:10px; }
+.dna-row { display:flex; align-items:center; gap:10px; }
+.dna-lbl { font-size:11px; color:var(--sub); min-width:40px; display:flex; align-items:center; gap:4px; }
+.dna-lbl img { width:16px; height:16px; border-radius:3px; }
+.dna-bar-wrap { flex:1; height:8px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden; }
+.dna-bar-fill { height:100%; border-radius:4px; transition:width .8s; }
+.dna-bar-fill.lol-fill { background:linear-gradient(90deg,#C79B3B,#ffd96a); }
+.dna-bar-fill.tft-fill { background:linear-gradient(90deg,#14b8a6,#5eead4); }
+.dna-bar-fill.valo-fill { background:linear-gradient(90deg,#ff4655,#ff8b94); }
+.dna-pct { font-size:11px; color:var(--text); min-width:32px; text-align:right; font-weight:700; }
+
+/* Two column layout for TFT chart and features */
+#two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* Match history scrollable container */
+#match-history-bd { max-height:350px; overflow-y:auto; }
+#match-history-bd::-webkit-scrollbar { width:4px; }
+#match-history-bd::-webkit-scrollbar-thumb { background:#333; border-radius:2px; }
+
+/* TFT Main Layout - Chart+Stats on left, Features on right */
+.tft-main-row { display:flex; gap:12px; }
+.tft-left-section { flex:1; display:flex; gap:12px; min-width:0; }
+.tft-chart-wrapper { flex:1; min-width:0; }
+.tft-stats-side { display:flex; flex-direction:column; gap:8px; min-width:130px; }
+.tft-features-section { min-width:280px; max-width:320px; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+/* ── Role Stats ── */
+.role-stats-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.section-hd { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--sub); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.role-tabs { display:flex; gap:4px; margin-bottom:10px; }
+.role-tab { font-size:10px; padding:3px 10px; border-radius:6px; cursor:pointer; color:var(--sub); background:none; border:1px solid transparent; transition:all .15s; }
+.role-tab.active { background:var(--game-glow); color:var(--game-color); border-color:rgba(255,255,255,.06); }
+.role-table { width:100%; border-collapse:collapse; }
+.role-table th { font-size:9px; color:var(--sub); text-align:left; padding:3px 6px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+.role-table th.r { text-align:right; }
+.role-table td { font-size:11px; padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.03); }
+.role-table tr:last-child td { border-bottom:none; }
+.role-icon { width:18px; height:18px; margin-right:6px; vertical-align:middle; opacity:.7; }
+.wr-bar-wrap { display:flex; align-items:center; gap:6px; }
+.wr-bar-bg { flex:1; height:5px; background:rgba(255,255,255,.07); border-radius:3px; overflow:hidden; }
+.wr-bar-fill { height:100%; border-radius:3px; }
+.wr-bar-fill.good { background:var(--green); }
+.wr-bar-fill.mid  { background:var(--gold); }
+.wr-bar-fill.bad  { background:var(--red); }
+.wr-pct { font-size:10px; font-weight:700; min-width:34px; text-align:right; }
+.wr-pct.good { color:var(--green); }
+.wr-pct.mid  { color:var(--gold); }
+.wr-pct.bad  { color:var(--red); }
+
+/* ── Most Played With ── */
+.mp-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.mp-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.03); }
+.mp-row:last-child { border-bottom:none; }
+.mp-icon { width:28px; height:28px; border-radius:6px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; overflow:hidden; flex-shrink:0; }
+.mp-icon img { width:100%; height:100%; object-fit:cover; }
+.mp-name { flex:1; font-size:11px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mp-rank { font-size:10px; color:var(--sub); }
+.mp-games { font-size:10px; color:var(--sub); text-align:right; white-space:nowrap; }
+.mp-wr { font-size:10px; font-weight:700; min-width:36px; text-align:right; }
+.mp-wr.good { color:var(--green); }
+.mp-wr.mid  { color:var(--gold); }
+.mp-wr.bad  { color:var(--red); }
+
+/* ── LoL stats layout ── */
+.lol-mid-section { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; }
+.lol-features-col { min-width:250px; max-width:300px; }
+
+/* ── Match row redesign ── */
+.match-row { border-radius:8px; margin-bottom:5px; overflow:hidden; cursor:pointer; transition:background .12s; }
+.match-row:hover { background:rgba(255,255,255,.02); }
+.match-row-main { display:flex; align-items:center; gap:10px; padding:8px 10px; border-left:3px solid transparent; }
+.match-row-main.win  { border-left-color:var(--green); }
+.match-row-main.loss { border-left-color:var(--red); }
+.match-champ { width:36px; height:36px; border-radius:7px; flex-shrink:0; background:var(--surface); border:1px solid var(--border); overflow:hidden; }
+.match-champ img { width:100%; height:100%; object-fit:cover; }
+.match-basic { flex:1; min-width:0; }
+.match-kda-line { font-size:12px; font-weight:600; color:var(--text); }
+.match-dur-line { font-size:10px; color:var(--sub); margin-top:1px; }
+.match-wl-badge { width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; font-family:'Rajdhani',sans-serif; flex-shrink:0; }
+.match-wl-badge.win  { background:rgba(52,211,153,.2); color:var(--green); }
+.match-wl-badge.loss { background:rgba(248,113,113,.2); color:var(--red); }
+
+/* Expanded detail row */
+.match-row-detail { display:none; padding:8px 10px 10px; background:rgba(255,255,255,.025); border-top:1px solid rgba(255,255,255,.04); }
+.match-row.expanded .match-row-detail { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.match-expand-left { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.match-expand-badge { font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px; font-family:'Rajdhani',sans-serif; }
+.match-expand-badge.win  { background:rgba(52,211,153,.2); color:var(--green); }
+.match-expand-badge.loss { background:rgba(248,113,113,.2); color:var(--red); }
+.match-lp { font-size:11px; font-weight:700; }
+.match-lp.pos { color:var(--green); }
+.match-lp.neg { color:var(--red); }
+.match-detail-kda { font-size:12px; font-weight:600; color:var(--text); }
+.match-detail-dur { font-size:11px; color:var(--sub); }
+.match-items { display:flex; gap:3px; flex-wrap:nowrap; flex-shrink:0; }
+.item-icon { width:26px; height:26px; border-radius:4px; background:var(--surface); border:1px solid var(--border); overflow:hidden; flex-shrink:0; }
+.item-icon img { width:100%; height:100%; object-fit:cover; }
+.match-time-ago { font-size:10px; color:var(--sub); white-space:nowrap; margin-left:auto; }
+
+/* ── Riot Tab extras ── */
+.fun-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.fun-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px; }
+.fun-item-icon { font-size:18px; margin-bottom:4px; }
+.fun-item-label { font-size:9px; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; }
+.fun-item-val { font-size:12px; font-weight:700; color:var(--text); margin-top:2px; }
+.fun-item-val.ok   { color:var(--green); }
+.fun-item-val.warn { color:var(--red); }
+.fun-item-val.gold { color:var(--gold); }
+.timeline { display:flex; flex-direction:column; gap:6px; }
+.tl-item { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.tl-item:last-child { border-bottom:none; }
+.tl-icon { font-size:14px; flex-shrink:0; width:22px; text-align:center; }
+.tl-year { font-size:10px; color:var(--sub); min-width:36px; }
+.tl-desc { font-size:12px; font-weight:500; flex:1; }
+.tl-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; text-transform:uppercase; }
+.tl-badge.peak { background:rgba(251,191,36,.15); color:var(--gold); border:1px solid rgba(251,191,36,.3); }
+.tl-badge.dark { background:rgba(248,113,113,.12); color:var(--red); border:1px solid rgba(248,113,113,.25); }
+.tl-badge.now  { background:var(--game-glow); color:var(--game-color); border:1px solid rgba(255,255,255,.1); }
+.roast-btn { width:100%; padding:11px; background:linear-gradient(135deg,rgba(227,38,54,.15),rgba(200,30,30,.06)); border:1px solid rgba(227,38,54,.3); border-radius:9px; color:#e32636; font-size:13px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .2s; }
+.roast-btn:hover { background:linear-gradient(135deg,rgba(227,38,54,.28),rgba(200,30,30,.14)); }
+.roast-output { margin-top:10px; padding:11px 13px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; font-size:12px; color:var(--text); line-height:1.5; font-style:italic; display:none; animation:fadeIn .3s ease; }
+.share-btn { width:100%; padding:10px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--sub); font-size:12px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; margin-top:8px; }
+.share-btn:hover { background:rgba(255,255,255,.1); color:var(--text); }
+.share-output { margin-top:8px; padding:10px 12px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:8px; font-size:10px; color:var(--text); white-space:pre; font-family:monospace; line-height:1.7; display:none; overflow-x:auto; }
+.share-copy { margin-top:6px; text-align:center; font-size:10px; color:var(--green); display:none; animation:fadeIn .2s; }
+.dna-personality { display:flex; align-items:center; gap:8px; padding:10px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; margin-top:10px; }
+.dna-personality .pers-icon { font-size:18px; flex-shrink:0; }
+.dna-personality .pers-label { font-size:12px; font-weight:600; }
+.dna-personality .pers-sub { font-size:10px; color:var(--sub); margin-top:1px; }
+
+</style>
+</head>
+<body>
+
+<!-- Titlebar removed - controls in game-nav -->
+
+<div id="game-nav"></div>
+
+<div id="main-wrapper">
+  <div id="rank-bg"></div>
+  <div id="content"></div>
+</div>
+
+<!-- Status bar removed - settings in titlebar -->
+<!-- Settings Modal -->
+<div id="settings-overlay">
+  <div class="settings-header">
+    <span class="settings-title" data-i18n="settings">Nastavení</span>
+    <button class="settings-close" onclick="closeSettings()">✕</button>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label" data-i18n="appearance">Vzhled</div>
+    <div class="settings-option">
+      <span class="settings-option-name" data-i18n="theme">Motiv</span>
+      <select class="settings-select" id="theme-select" onchange="setTheme(this.value)">
+        <option value="dark" data-i18n="dark">Tmavý</option>
+        <option value="light" data-i18n="light">Světlý</option>
+      </select>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label" data-i18n="language">Jazyk</div>
+    <div class="settings-option">
+      <span class="settings-option-name" data-i18n="appLanguage">Jazyk aplikace</span>
+      <select class="settings-select" id="lang-select" onchange="setLanguage(this.value)">
+        <option value="cs">Čeština</option>
+        <option value="sk">Slovenčina</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="pl">Polski</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Search Overlay -->
+<div id="search-overlay">
+  <div class="search-header">
+    <div class="search-input-wrap">
+      <span>🔍</span>
+      <input id="search-input" type="text" placeholder="Hledat hráče..." autocomplete="off"
+             oninput="onSearchInput(this.value)" onkeydown="onSearchKey(event)">
+    </div>
+    <button class="search-close" onclick="closeSearch()">✕</button>
+  </div>
+  <div id="search-results"><div class="search-empty" data-i18n="searchHint">Napiš jméno hráče</div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// ── Translations ──────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+var TRANSLATIONS = {
+  cs: {
+    settings: "Nastavení",
+    appearance: "Vzhled",
+    theme: "Motiv",
+    dark: "Tmavý",
+    light: "Světlý",
+    language: "Jazyk",
+    appLanguage: "Jazyk aplikace",
+    wins: "Výhry",
+    losses: "Prohry",
+    winRate: "Win Rate",
+    features: "Funkce",
+    recentMatches: "Poslední zápasy",
+    refresh: "Obnovit",
+    searching: "Hledám...",
+    connected: "Připojeno",
+    offline: "Offline",
+    notLoggedIn: "Nepřihlášen",
+    unranked: "Neohodnocen",
+    noMatchHistory: "Žádná match history.",
+    noTftHistory: "Žádná TFT historie.",
+    lolClientOffline: "LoL Client offline.",
+    riotClientOffline: "Riot Client offline.",
+    loadingValo: "Načítám Valo data...",
+    valoComingSoon: "Valo match history - coming soon",
+    searchHint: "Napiš jméno hráče",
+    avgPlacement: "Prům. umístění",
+    top4Rate: "Míra TOP 4",
+    winRateStat: "Míra vítězství",
+    riotDna: "Riot DNA",
+    riotProfile: "Riot Profile",
+    inQueue: "V queue",
+    lobby: "Lobby",
+    waiting: "Čekám...",
+    autoAccept: "Auto-Accept",
+    autoAcceptDesc: "Automaticky přijme hru",
+    autoAcceptTftDesc: "Automaticky přijme TFT hru",
+    champSelectAI: "Champ Select AI",
+    champSelectAIDesc: "AI analýza v champ selectu",
+    ingameOverlay: "In-Game Overlay",
+    ingameOverlayDesc: "Overlay s itemy a tipy ve hře",
+    spamRanked: "Spam Ranked",
+    spamRankedDesc: "Auto-queue Ranked Solo po každé hře",
+    spamRankedTftDesc: "Auto-queue TFT Ranked po každé hře",
+    spamFlex: "Spam Flex",
+    spamFlexDesc: "Auto-queue Ranked Flex po každé hře",
+    tftCompanion: "TFT Companion",
+    tftCompanionDesc: "Kompozice a augmenty overlay",
+    spamDoubleUp: "Spam Double Up",
+    spamDoubleUpDesc: "Auto-queue Double Up po každé hře",
+    valoOverlay: "In-Game Overlay",
+    valoOverlayDesc: "Stats overlay ve hře",
+    justNow: "právě",
+    hoursAgo: "před {n}h",
+    daysAgo: "před {n}d",
+    ranked: "Ranked",
+    place: "místo"
+  },
+  en: {
+    settings: "Settings",
+    appearance: "Appearance",
+    theme: "Theme",
+    dark: "Dark",
+    light: "Light",
+    language: "Language",
+    appLanguage: "App Language",
+    wins: "Wins",
+    losses: "Losses",
+    winRate: "Win Rate",
+    features: "Features",
+    recentMatches: "Recent Matches",
+    refresh: "Refresh",
+    searching: "Searching...",
+    connected: "Connected",
+    offline: "Offline",
+    notLoggedIn: "Not logged in",
+    unranked: "Unranked",
+    noMatchHistory: "No match history.",
+    noTftHistory: "No TFT history.",
+    lolClientOffline: "LoL Client offline.",
+    riotClientOffline: "Riot Client offline.",
+    loadingValo: "Loading Valo data...",
+    valoComingSoon: "Valo match history - coming soon",
+    searchHint: "Enter player name",
+    avgPlacement: "Avg. Placement",
+    top4Rate: "TOP 4 Rate",
+    winRateStat: "Win Rate",
+    riotDna: "Riot DNA",
+    riotProfile: "Riot Profile",
+    inQueue: "In queue",
+    lobby: "Lobby",
+    waiting: "Waiting...",
+    autoAccept: "Auto-Accept",
+    autoAcceptDesc: "Automatically accept game",
+    autoAcceptTftDesc: "Automatically accept TFT game",
+    champSelectAI: "Champ Select AI",
+    champSelectAIDesc: "AI analysis in champ select",
+    ingameOverlay: "In-Game Overlay",
+    ingameOverlayDesc: "Overlay with items and tips",
+    spamRanked: "Spam Ranked",
+    spamRankedDesc: "Auto-queue Ranked Solo after every game",
+    spamRankedTftDesc: "Auto-queue TFT Ranked after every game",
+    spamFlex: "Spam Flex",
+    spamFlexDesc: "Auto-queue Ranked Flex after every game",
+    tftCompanion: "TFT Companion",
+    tftCompanionDesc: "Compositions and augments overlay",
+    spamDoubleUp: "Spam Double Up",
+    spamDoubleUpDesc: "Auto-queue Double Up after every game",
+    valoOverlay: "In-Game Overlay",
+    valoOverlayDesc: "Stats overlay in-game",
+    justNow: "just now",
+    hoursAgo: "{n}h ago",
+    daysAgo: "{n}d ago",
+    ranked: "Ranked",
+    place: "place"
+  },
+  sk: {
+    settings: "Nastavenia",
+    appearance: "Vzhľad",
+    theme: "Téma",
+    dark: "Tmavá",
+    light: "Svetlá",
+    language: "Jazyk",
+    appLanguage: "Jazyk aplikácie",
+    wins: "Výhry",
+    losses: "Prehry",
+    winRate: "Win Rate",
+    features: "Funkcie",
+    recentMatches: "Posledné zápasy",
+    refresh: "Obnoviť",
+    searching: "Hľadám...",
+    connected: "Pripojené",
+    offline: "Offline",
+    notLoggedIn: "Neprihlásený",
+    unranked: "Neohodnotený",
+    noMatchHistory: "Žiadna história zápasov.",
+    noTftHistory: "Žiadna TFT história.",
+    lolClientOffline: "LoL Client offline.",
+    riotClientOffline: "Riot Client offline.",
+    loadingValo: "Načítavam Valo dáta...",
+    valoComingSoon: "Valo história - čoskoro",
+    searchHint: "Zadaj meno hráča",
+    avgPlacement: "Priem. umiestnenie",
+    top4Rate: "Miera TOP 4",
+    winRateStat: "Miera víťazstiev",
+    riotDna: "Riot DNA",
+    riotProfile: "Riot Profil",
+    inQueue: "V queue",
+    lobby: "Lobby",
+    waiting: "Čakám...",
+    autoAccept: "Auto-Accept",
+    autoAcceptDesc: "Automaticky prijme hru",
+    autoAcceptTftDesc: "Automaticky prijme TFT hru",
+    champSelectAI: "Champ Select AI",
+    champSelectAIDesc: "AI analýza v champ selecte",
+    ingameOverlay: "In-Game Overlay",
+    ingameOverlayDesc: "Overlay s itemami a tipmi v hre",
+    spamRanked: "Spam Ranked",
+    spamRankedDesc: "Auto-queue Ranked Solo po každej hre",
+    spamRankedTftDesc: "Auto-queue TFT Ranked po každej hre",
+    spamFlex: "Spam Flex",
+    spamFlexDesc: "Auto-queue Ranked Flex po každej hre",
+    tftCompanion: "TFT Companion",
+    tftCompanionDesc: "Kompozície a augmenty overlay",
+    spamDoubleUp: "Spam Double Up",
+    spamDoubleUpDesc: "Auto-queue Double Up po každej hre",
+    valoOverlay: "In-Game Overlay",
+    valoOverlayDesc: "Stats overlay v hre",
+    justNow: "práve",
+    hoursAgo: "pred {n}h",
+    daysAgo: "pred {n}d",
+    ranked: "Ranked",
+    place: "miesto"
+  },
+  de: {
+    settings: "Einstellungen",
+    appearance: "Aussehen",
+    theme: "Design",
+    dark: "Dunkel",
+    light: "Hell",
+    language: "Sprache",
+    appLanguage: "App-Sprache",
+    wins: "Siege",
+    losses: "Niederlagen",
+    winRate: "Siegrate",
+    features: "Funktionen",
+    recentMatches: "Letzte Spiele",
+    refresh: "Aktualisieren",
+    searching: "Suche...",
+    connected: "Verbunden",
+    offline: "Offline",
+    notLoggedIn: "Nicht angemeldet",
+    unranked: "Unbewertet",
+    noMatchHistory: "Keine Spielhistorie.",
+    noTftHistory: "Keine TFT-Historie.",
+    lolClientOffline: "LoL Client offline.",
+    riotClientOffline: "Riot Client offline.",
+    loadingValo: "Lade Valo-Daten...",
+    valoComingSoon: "Valo Historie - bald verfügbar",
+    searchHint: "Spielername eingeben",
+    avgPlacement: "Durchschn. Platz",
+    top4Rate: "TOP 4 Rate",
+    winRateStat: "Siegrate",
+    riotDna: "Riot DNA",
+    riotProfile: "Riot Profil",
+    inQueue: "In Warteschlange",
+    lobby: "Lobby",
+    waiting: "Warte...",
+    autoAccept: "Auto-Accept",
+    autoAcceptDesc: "Spiel automatisch annehmen",
+    autoAcceptTftDesc: "TFT-Spiel automatisch annehmen",
+    champSelectAI: "Champ Select AI",
+    champSelectAIDesc: "KI-Analyse im Champ Select",
+    ingameOverlay: "In-Game Overlay",
+    ingameOverlayDesc: "Overlay mit Items und Tipps",
+    spamRanked: "Spam Ranked",
+    spamRankedDesc: "Auto-Queue Ranked Solo nach jedem Spiel",
+    spamRankedTftDesc: "Auto-Queue TFT Ranked nach jedem Spiel",
+    spamFlex: "Spam Flex",
+    spamFlexDesc: "Auto-Queue Ranked Flex nach jedem Spiel",
+    tftCompanion: "TFT Companion",
+    tftCompanionDesc: "Kompositionen und Augmente Overlay",
+    spamDoubleUp: "Spam Double Up",
+    spamDoubleUpDesc: "Auto-Queue Double Up nach jedem Spiel",
+    valoOverlay: "In-Game Overlay",
+    valoOverlayDesc: "Stats-Overlay im Spiel",
+    justNow: "gerade",
+    hoursAgo: "vor {n}h",
+    daysAgo: "vor {n}d",
+    ranked: "Ranked",
+    place: "Platz"
+  },
+  pl: {
+    settings: "Ustawienia",
+    appearance: "Wygląd",
+    theme: "Motyw",
+    dark: "Ciemny",
+    light: "Jasny",
+    language: "Język",
+    appLanguage: "Język aplikacji",
+    wins: "Wygrane",
+    losses: "Przegrane",
+    winRate: "Win Rate",
+    features: "Funkcje",
+    recentMatches: "Ostatnie mecze",
+    refresh: "Odśwież",
+    searching: "Szukam...",
+    connected: "Połączono",
+    offline: "Offline",
+    notLoggedIn: "Niezalogowany",
+    unranked: "Bez rangi",
+    noMatchHistory: "Brak historii meczy.",
+    noTftHistory: "Brak historii TFT.",
+    lolClientOffline: "LoL Client offline.",
+    riotClientOffline: "Riot Client offline.",
+    loadingValo: "Ładuję dane Valo...",
+    valoComingSoon: "Historia Valo - wkrótce",
+    searchHint: "Wpisz nazwę gracza",
+    avgPlacement: "Śr. miejsce",
+    top4Rate: "TOP 4 Rate",
+    winRateStat: "Procent wygranych",
+    riotDna: "Riot DNA",
+    riotProfile: "Profil Riot",
+    inQueue: "W kolejce",
+    lobby: "Lobby",
+    waiting: "Czekam...",
+    autoAccept: "Auto-Accept",
+    autoAcceptDesc: "Automatycznie akceptuj grę",
+    autoAcceptTftDesc: "Automatycznie akceptuj grę TFT",
+    champSelectAI: "Champ Select AI",
+    champSelectAIDesc: "Analiza AI w champ select",
+    ingameOverlay: "In-Game Overlay",
+    ingameOverlayDesc: "Overlay z itemami i wskazówkami",
+    spamRanked: "Spam Ranked",
+    spamRankedDesc: "Auto-queue Ranked Solo po każdej grze",
+    spamRankedTftDesc: "Auto-queue TFT Ranked po każdej grze",
+    spamFlex: "Spam Flex",
+    spamFlexDesc: "Auto-queue Ranked Flex po każdej grze",
+    tftCompanion: "TFT Companion",
+    tftCompanionDesc: "Kompozycje i augmenty overlay",
+    spamDoubleUp: "Spam Double Up",
+    spamDoubleUpDesc: "Auto-queue Double Up po każdej grze",
+    valoOverlay: "In-Game Overlay",
+    valoOverlayDesc: "Stats overlay w grze",
+    justNow: "teraz",
+    hoursAgo: "{n}h temu",
+    daysAgo: "{n}d temu",
+    ranked: "Ranked",
+    place: "miejsce"
+  }
+};
+
+function t(key, params) {
+  var str = TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key] ? TRANSLATIONS[currentLang][key] : (TRANSLATIONS.cs[key] || key);
+  if (params) {
+    Object.keys(params).forEach(function(k) {
+      str = str.replace("{" + k + "}", params[k]);
+    });
+  }
+  return str;
+}
+
+function applyTranslations() {
+  document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n");
+    if (el.tagName === "OPTION") {
+      el.textContent = t(key);
+    } else if (el.tagName === "INPUT") {
+      el.placeholder = t(key);
+    } else {
+      el.textContent = t(key);
+    }
+  });
+  // Update search placeholder
+  var searchInput = document.getElementById("search-input");
+  if (searchInput) searchInput.placeholder = t("searchHint");
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Config ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+var GAMES = {
+  lol:  { key:"lol",  label:"LoL",  icon:"../../assets/games/lol.png",  accent:"#C79B3B", glow:"rgba(199,155,59,.14)",  trackers:[{name:"op.gg",url:"https://op.gg/lol/summoners/{region}/{name}"},{name:"u.gg",url:"https://u.gg/lol/profile/{region}/{name}/overview"}] },
+  tft:  { key:"tft",  label:"TFT",  icon:"../../assets/games/tft.png",  accent:"#14b8a6", glow:"rgba(20,184,166,.14)",  trackers:[{name:"metatft.com",url:"https://www.metatft.com/players/{region}/{name}"},{name:"tactics.tools",url:"https://tactics.tools/player/{region}/{name}"}] },
+  valo: { key:"valo", label:"Valo", icon:"../../assets/games/valo.png", accent:"#ff4655", glow:"rgba(255,70,85,.14)",   trackers:[{name:"tracker.gg",url:"https://tracker.gg/valorant/profile/riot/{name}/overview"}] },
+  riot: { key:"riot", label:"Riot", icon:null,                          accent:"#e32636", glow:"rgba(227,38,54,.12)",  trackers:[] },
+};
+var GAME_ORDER  = ["lol","tft","valo","riot"];
+var REGION      = localStorage.getItem("sk_region") || "eune";
+var selectedGame = localStorage.getItem("selectedGame") || "tft";
+var activeGameKey = null;
+var settings     = {};
+try { settings = JSON.parse(localStorage.getItem("sk_settings") || "{}"); } catch(ex){}
+var currentState = {};
+var lcuConnected  = false;
+var valoConnected = false;
+var currentTheme = localStorage.getItem("sk_theme") || "dark";
+var currentLang = localStorage.getItem("sk_lang") || "cs";
+
+// Rank colors mapping
+var RANK_COLORS = {
+  "Iron": { color:"#6B7280", class:"iron" },
+  "Bronze": { color:"#B45309", class:"bronze" },
+  "Silver": { color:"#9CA3AF", class:"silver" },
+  "Gold": { color:"#F59E0B", class:"gold" },
+  "Platinum": { color:"#22D3EE", class:"platinum" },
+  "Emerald": { color:"#10B981", class:"emerald" },
+  "Diamond": { color:"#3B82F6", class:"diamond" },
+  "Master": { color:"#9333EA", class:"master" },
+  "Grandmaster": { color:"#EF4444", class:"grandmaster" },
+  "Challenger": { color:"#A78BFA", class:"challenger" },
+};
+
+// Rank backgrounds
+var RANK_BACKGROUNDS = {
+  "Iron": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/iron.png",
+  "Bronze": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/bronze.png",
+  "Silver": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/silver.png",
+  "Gold": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/gold.png",
+  "Platinum": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/platinum.png",
+  "Emerald": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/emerald.png",
+  "Diamond": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/diamond.png",
+  "Master": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/master.png",
+  "Grandmaster": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/grandmaster.png",
+  "Challenger": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/challenger.png",
+};
+
+function getBg() {
+  try { return overwolf.windows.getMainWindow(); } catch(ex) { return null; }
+}
+function minimizeWin() { overwolf.windows.getCurrentWindow(function(r){ if(r.success) overwolf.windows.minimize(r.window.id,function(){}); }); }
+function closeToTray()  { minimizeWin(); }
+
+// ── Settings ──────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById("settings-overlay").classList.add("open");
+  document.getElementById("theme-select").value = currentTheme;
+  document.getElementById("lang-select").value = currentLang;
+}
+function closeSettings() {
+  document.getElementById("settings-overlay").classList.remove("open");
+}
+function setTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem("sk_theme", theme);
+  document.documentElement.setAttribute("data-theme", theme);
+}
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem("sk_lang", lang);
+  applyTranslations();
+  renderContent();
+}
+
+// ── Window position & size ────────────────────────────────────
+function saveWindowState() {
+  overwolf.windows.getCurrentWindow(function(r) {
+    if (!r.success) return;
+    var w = r.window;
+    var state = {
+      left: w.left,
+      top: w.top,
+      width: w.width,
+      height: w.height,
+      monitor: w.monitorId || 0
+    };
+    localStorage.setItem("sk_winstate", JSON.stringify(state));
+  });
+}
+
+function restoreWindowState() {
+  var raw = localStorage.getItem("sk_winstate");
+  if (!raw) return;
+  try {
+    var state = JSON.parse(raw);
+    overwolf.windows.getCurrentWindow(function(r) {
+      if (!r.success) return;
+      var winId = r.window.id;
+      // Restore position
+      if (state.left !== undefined && state.top !== undefined) {
+        overwolf.windows.changePosition(winId, state.left, state.top, function(){});
+      }
+      // Restore size
+      if (state.width && state.height) {
+        overwolf.windows.changeSize(winId, state.width, state.height, function(){});
+      }
+    });
+  } catch(ex){}
+}
+
+setInterval(saveWindowState, 5000);
+
+// ══════════════════════════════════════════════════════════════
+// ── Profile cache ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function getProfile(key) {
+  try {
+    var raw = localStorage.getItem("profile_" + key);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (key === "lol" || key === "tft") {
+        var sib = getProfileRaw(key === "lol" ? "tft" : "lol");
+        if (sib && sib.name && sib.name !== t("notLoggedIn") && (!p.name || p.name === t("notLoggedIn"))) {
+          p.name = sib.name; p.iconUrl = sib.iconUrl; p.puuid = sib.puuid;
+        }
+      }
+      return p;
+    }
+  } catch(ex){}
+  return { name: t("notLoggedIn"), rank:"—", wins:0, losses:0, matches:[], placements:[0,0,0,0,0,0,0,0] };
+}
+function getProfileRaw(key) {
+  try { return JSON.parse(localStorage.getItem("profile_" + key) || "{}"); } catch(ex){ return {}; }
+}
+function saveProfile(key, obj) {
+  try { localStorage.setItem("profile_" + key, JSON.stringify(obj)); } catch(ex){}
+}
+function getCachedHistory(key) {
+  try { return JSON.parse(localStorage.getItem("match_history_" + key) || "null"); } catch(ex){ return null; }
+}
+function saveHistory(key, html) {
+  try { localStorage.setItem("match_history_" + key, JSON.stringify({ html:html, ts:Date.now() })); } catch(ex){}
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Rank Detection ────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function getRankTier(rankStr) {
+  if (!rankStr) return null;
+  var tiers = Object.keys(RANK_COLORS);
+  for (var i = 0; i < tiers.length; i++) {
+    if (rankStr.toLowerCase().indexOf(tiers[i].toLowerCase()) !== -1) {
+      return tiers[i];
+    }
+  }
+  return null;
+}
+
+function getAvatarRankClass(rankStr) {
+  var tier = getRankTier(rankStr);
+  if (tier && RANK_COLORS[tier]) {
+    return "rank-" + RANK_COLORS[tier].class;
+  }
+  return "";
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Nav ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function buildNav() {
+  var nav = document.getElementById("game-nav");
+  nav.innerHTML = "";
+  GAME_ORDER.forEach(function(key) {
+    var g = GAMES[key];
+    if (key === "riot") {
+      var sp  = document.createElement("span"); sp.className = "nav-spacer"; nav.appendChild(sp);
+      var div = document.createElement("span"); div.className = "nav-div";   nav.appendChild(div);
+    }
+    var tab = document.createElement("div");
+    tab.className = "game-tab" + (key === selectedGame ? " active" : "");
+    tab.dataset.key = key;
+    var icon = key === "riot"
+      ? '<div class="riot-tab-icon">R</div>'
+      : '<img class="tab-img" src="' + g.icon + '" alt="' + g.label + '">';
+    tab.innerHTML = icon + '<span class="tab-label">' + g.label + '</span>';
+    tab.onclick = function() { selectGame(key); };
+    nav.appendChild(tab);
+  });
+  
+  // Add window controls on the right
+  var controls = document.createElement("div");
+  controls.className = "nav-controls";
+  controls.innerHTML = '<button class="wbtn settings" onclick="openSettings()" title="' + t("settings") + '">⚙</button>' +
+    '<button class="wbtn" onclick="minimizeWin()" title="Minimize">─</button>' +
+    '<button class="wbtn close" onclick="closeToTray()" title="Close">✕</button>';
+  nav.appendChild(controls);
+  
+  applyAccent();
+}
+
+function selectGame(key) {
+  selectedGame = key;
+  localStorage.setItem("selectedGame", key);
+  document.querySelectorAll(".game-tab").forEach(function(t) {
+    t.classList.toggle("active", t.dataset.key === key);
+  });
+  applyAccent();
+  closeSearch();
+  renderContent();
+}
+
+function applyAccent() {
+  var g = GAMES[selectedGame] || GAMES.lol;
+  document.documentElement.style.setProperty("--game-color", g.accent);
+  document.documentElement.style.setProperty("--game-glow",  g.glow);
+  var li = document.getElementById("logo-icon"); if (li) li.style.background = g.accent;
+}
+
+function markLive(key) {
+  document.querySelectorAll(".game-tab").forEach(function(t) {
+    var d = t.querySelector(".live-dot"); if (d) d.remove();
+    if (t.dataset.key === key) {
+      var dot = document.createElement("span"); dot.className = "live-dot"; t.appendChild(dot);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Content Rendering ─────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function renderContent() {
+  var content = document.getElementById("content");
+  content.innerHTML = "";
+
+  if (selectedGame === "riot") { renderRiot(content); return; }
+  renderGameContent(content);
+}
+
+function renderGameContent(content) {
+  var g        = GAMES[selectedGame];
+  var profile  = getProfile(selectedGame);
+  var isLolFam = (selectedGame === "lol" || selectedGame === "tft");
+  var isValo   = (selectedGame === "valo");
+  var wins     = profile.wins || 0, losses = profile.losses || 0;
+  var total    = wins + losses;
+  var wr       = total > 0 ? Math.round(wins/total*100) : 0;
+  var connState = isLolFam ? (lcuConnected?"live":"offline") : isValo ? (valoConnected?"live":"offline") : "offline";
+
+  updateRankBackground(profile.rank);
+  var rankClass = getAvatarRankClass(profile.rank);
+
+  // Profile
+  content.insertAdjacentHTML("beforeend",
+    '<div id="profile-section">' +
+    '<div class="p-avatar ' + rankClass + '">' + (profile.iconUrl ? '<img src="'+profile.iconUrl+'">' : '👤') +
+    (connState==="live" ? '<div class="p-online"></div>' : '') + '</div>' +
+    '<div class="p-info">' +
+      '<div class="p-name">' + e(profile.name || t("notLoggedIn")) + '</div>' +
+      '<div class="p-rank">' + e(profile.rank || "—") + '</div>' +
+      '<div class="p-conn"><span class="p-conn-dot"></span>' + (connState==="live"?t("connected"):t("offline")) + '</div>' +
+    '</div>' +
+    '<div class="p-actions"><div class="p-action-btn" onclick="openSearch()">🔍</div></div>' +
+    '</div>'
+  );
+
+  // Stats row
+  content.insertAdjacentHTML("beforeend",
+    '<div class="stats-row">' +
+    '<div class="stat-box"><div class="stat-val g">' + wins + '</div><div class="stat-lbl">' + t("wins") + '</div></div>' +
+    '<div class="stat-box"><div class="stat-val r">' + losses + '</div><div class="stat-lbl">' + t("losses") + '</div></div>' +
+    '<div class="stat-box"><div class="stat-val ' + (wr>=50?"g":wr<45?"r":"y") + '">' + wr + '%</div><div class="stat-lbl">' + t("winRate") + '</div></div>' +
+    '</div>'
+  );
+
+  // ── TFT: Chart+Stats | Features ──────────────────────────────
+  if (selectedGame === "tft") {
+    var placements = profile.placements || [0,0,0,0,0,0,0,0];
+    var maxP = Math.max.apply(null, placements) || 1;
+    var avgPlace = profile.avgPlacement || 0;
+    var top4Rate = profile.top4Rate || 0;
+    var winRateVal = profile.winRate || 0;
+    var barsHtml = placements.map(function(p,i) {
+      var h = Math.max(8, Math.round((p/maxP)*80));
+      return '<div class="chart-bar" style="height:'+h+'px" data-count="'+p+'" title="'+(i+1)+'. '+t("place")+': '+p+'x"></div>';
+    }).join("");
+    var feats = getFeatures(selectedGame);
+    var featsHtml = feats.map(function(f) {
+      var on = getSetting(selectedGame, f.id) !== false;
+      return '<div class="feat"><div><div class="feat-name">' + e(f.name) + getSpamStatusHtml(f.id,selectedGame,on) + '</div><div class="feat-desc">' + e(f.desc) + '</div></div>' +
+        '<div class="tog' + (on?" on":"") + '" data-fid="' + f.id + '"><div class="tog-knob"></div></div></div>';
+    }).join("");
+    content.insertAdjacentHTML("beforeend",
+      '<div class="tft-main-row">' +
+        '<div class="tft-left-section">' +
+          '<div class="tft-chart-wrapper"><div class="chart-box">' +
+            '<div class="chart-bars">' + barsHtml + '</div>' +
+            '<div class="chart-labels">' + [1,2,3,4,5,6,7,8].map(function(n){return '<span class="chart-label">'+n+'</span>';}).join("") + '</div>' +
+          '</div></div>' +
+          '<div class="tft-stats-side">' +
+            '<div class="chart-stat"><div class="chart-stat-val">' + avgPlace.toFixed(2) + '</div><div class="chart-stat-lbl">' + t("avgPlacement") + '</div></div>' +
+            '<div class="chart-stat"><div class="chart-stat-val">' + top4Rate.toFixed(1) + '%</div><div class="chart-stat-lbl">' + t("top4Rate") + '</div></div>' +
+            '<div class="chart-stat"><div class="chart-stat-val">' + winRateVal.toFixed(1) + '%</div><div class="chart-stat-lbl">' + t("winRateStat") + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="tft-features-section"><div class="features-card"><div class="features-hd">' + t("features") + '</div>' + featsHtml + '</div></div>' +
+      '</div>'
+    );
+  }
+
+  // ── LoL: Role Stats | Most Played With ───────────────────────
+  if (selectedGame === "lol") {
+    var roleStats = profile.roleStats || {};
+    var mostWith  = profile.mostWith  || [];
+    var roleOrder = ["top","jungle","mid","adc","support"];
+    var roleLabels = { top:"Horní lajna", jungle:"Džungler", mid:"Středová lajna", adc:"ÚP tahoun", support:"Podpora" };
+    var roleTabs = ['Vše', 'Sólová fronta'];
+    var activeRoleTab = profile._roleTabIdx || 0;
+
+    var roleRowsHtml = roleOrder.map(function(r) {
+      var rs = roleStats[r] || { games:0, wins:0 };
+      if (!rs.games) return '';
+      var wrR = Math.round(rs.wins/rs.games*100);
+      var wrCls = wrR>=55?"good":wrR<48?"bad":"mid";
+      var barW = Math.min(100, wrR);
+      return '<tr><td style="display:flex;align-items:center;">' +
+        '<span style="font-size:13px;margin-right:6px;">' + {top:"⬆",jungle:"🌲",mid:"⭕",adc:"🏹",support:"🛡️"}[r] + '</span>' +
+        e(roleLabels[r]) + '</td>' +
+        '<td style="text-align:center">' + rs.games + '</td>' +
+        '<td><div class="wr-bar-wrap"><div class="wr-bar-bg"><div class="wr-bar-fill '+wrCls+'" style="width:'+barW+'%"></div></div><span class="wr-pct '+wrCls+'">'+wrR+'%</span></div></td>' +
+        '</tr>';
+    }).join("");
+
+    var mpRowsHtml = mostWith.slice(0,6).map(function(mp) {
+      var wrM = mp.games > 0 ? Math.round(mp.wins/mp.games*100) : 0;
+      var wrCls = wrM>=55?"good":wrM<48?"bad":"mid";
+      var iconHtml = mp.iconUrl
+        ? '<div class="mp-icon"><img src="'+mp.iconUrl+'"></div>'
+        : '<div class="mp-icon" style="font-size:13px;">👤</div>';
+      return '<div class="mp-row">' + iconHtml +
+        '<div style="flex:1;min-width:0"><div class="mp-name">' + e(mp.name) + '</div><div class="mp-rank">' + e(mp.rank||"") + '</div></div>' +
+        '<div class="mp-games">' + mp.games + 'x</div>' +
+        '<div class="mp-wr '+wrCls+'">' + wrM + '%</div>' +
+        '</div>';
+    }).join("") || '<div class="match-loading">Načítám...</div>';
+
+    content.insertAdjacentHTML("beforeend",
+      '<div class="lol-mid-section">' +
+        '<div class="role-stats-card">' +
+          '<div class="section-hd">Role</div>' +
+          '<table class="role-table">' +
+            '<tr><th>Role</th><th style="text-align:center">Odehráno</th><th>Poměr vítězství</th></tr>' +
+            (roleRowsHtml || '<tr><td colspan="3" style="color:var(--sub);font-style:italic;padding:8px">Načítám...</td></tr>') +
+          '</table>' +
+        '</div>' +
+        '<div class="mp-card">' +
+          '<div class="section-hd">S kým hraje</div>' +
+          mpRowsHtml +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ── Features (non-TFT) ────────────────────────────────────────
+  if (selectedGame !== "tft") {
+    var feats2 = getFeatures(selectedGame);
+    var featsHtml2 = feats2.map(function(f) {
+      var on = getSetting(selectedGame, f.id) !== false;
+      return '<div class="feat"><div><div class="feat-name">' + e(f.name) + getSpamStatusHtml(f.id,selectedGame,on) + '</div><div class="feat-desc">' + e(f.desc) + '</div></div>' +
+        '<div class="tog' + (on?" on":"") + '" data-fid="' + f.id + '"><div class="tog-knob"></div></div></div>';
+    }).join("");
+    content.insertAdjacentHTML("beforeend",
+      '<div class="features-card"><div class="features-hd">' + t("features") + '</div>' + featsHtml2 + '</div>'
+    );
+  }
+
+  // ── Match history ─────────────────────────────────────────────
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card">' +
+    '<div class="match-hd">' + t("recentMatches") + ' <button class="scan-btn" onclick="' + (isLolFam?'refreshMatchHistory':'refreshValoMatches') + '()">↻ ' + t("refresh") + '</button></div>' +
+    '<div id="match-history-bd"><div class="match-loading">' + t("searching") + '</div></div>' +
+    '</div>'
+  );
+
+  attachToggles();
+
+  var bd = document.getElementById("match-history-bd");
+  var cached = getCachedHistory(selectedGame);
+  if (cached && cached.html) bd.innerHTML = cached.html;
+  if (connState === "live") {
+    setTimeout(function() {
+      if (isLolFam) refreshMatchHistory();
+      else if (isValo) refreshValoMatches();
+    }, 200);
+  }
+}
+
+function updateRankBackground(rankStr) {
+  var bg = document.getElementById("rank-bg");
+  if (!bg) return;
+  var tier = getRankTier(rankStr);
+  if (tier && RANK_BACKGROUNDS[tier]) {
+    bg.style.backgroundImage = "url('" + RANK_BACKGROUNDS[tier] + "')";
+  } else {
+    bg.style.backgroundImage = "none";
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Match History ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function refreshMatchHistory() {
+  var bg = getBg();
+  var bd = document.getElementById("match-history-bd");
+  if (!bd) return;
+  if (!bg || !bg.lcuPort) { bd.innerHTML = '<div class="match-loading">' + t("lolClientOffline") + '</div>'; return; }
+
+  bg.lcuRequest("GET", "/lol-summoner/v1/current-summoner", null, function(summ) {
+    if (!summ || !summ.puuid) return;
+    var prof = getProfile(selectedGame);
+    prof.name  = summ.gameName || summ.displayName || prof.name;
+    prof.puuid = summ.puuid;
+    if (summ.profileIconId) {
+      prof.iconUrl = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/" + summ.profileIconId + ".jpg";
+    }
+    saveProfile(selectedGame, prof);
+
+    if (selectedGame === "tft") { loadTftHistory(summ.puuid, bg, bd); return; }
+    loadLolHistory(summ.puuid, bg, bd);
+  });
+}
+
+function loadLolHistory(puuid, bg, bd) {
+  var ep = "/lol-match-history/v1/products/lol/" + puuid + "/matches?begIndex=0&endIndex=20";
+  bg.lcuRequest("GET", ep, null, function(hist) {
+    if (!hist) return;
+    var games = (hist.games && hist.games.games) || (Array.isArray(hist.games) ? hist.games : []);
+    if (!games.length) { bd.innerHTML = '<div class="match-loading">' + t("noMatchHistory") + '</div>'; return; }
+
+    // ── Compute role stats ──
+    var roleCount = { top:{g:0,w:0}, jungle:{g:0,w:0}, mid:{g:0,w:0}, adc:{g:0,w:0}, support:{g:0,w:0} };
+    // ── Compute most played with ──
+    var mpMap = {}; // name -> {games,wins,rank,iconUrl}
+
+    games.forEach(function(m) {
+      var myP   = m.participants && m.participants[0];
+      if (!myP) return;
+      var stats = myP.stats || {};
+      var win   = stats.win;
+
+      // Role
+      var pos   = (myP.teamPosition || myP.individualPosition || "").toUpperCase();
+      var lane  = myP.timeline && (myP.timeline.lane || "").toUpperCase() || "";
+      var role  = myP.timeline && (myP.timeline.role || "").toUpperCase() || "";
+      var key   = null;
+      if (pos === "TOP"     || lane === "TOP")                              key = "top";
+      else if (pos === "JUNGLE"  || lane === "JUNGLE")                     key = "jungle";
+      else if (pos === "MIDDLE"  || lane === "MIDDLE" || lane === "MID")   key = "mid";
+      else if (pos === "UTILITY" || role === "DUO_SUPPORT")                key = "support";
+      else if (pos === "BOTTOM"  || lane === "BOTTOM") {
+        key = (role === "DUO_SUPPORT") ? "support" : "adc";
+      }
+      if (key) { roleCount[key].g++; if (win) roleCount[key].w++; }
+
+      // Most played with — teammates (same teamId, not self)
+      if (m.participants && m.participants.length > 1) {
+        var myTeam = myP.teamId;
+        var myName = myP.summonerName || (myP.gameName + "#" + (myP.tagLine||"")) || "";
+        m.participants.slice(1).forEach(function(p) {
+          if (p.teamId !== myTeam) return;
+          var pname = p.summonerName || (p.gameName + "#" + (p.tagLine||"")) || p.puuid || "";
+          if (!pname || pname === myName) return;
+          if (!mpMap[pname]) mpMap[pname] = { name:pname, games:0, wins:0, rank:"", iconUrl:"" };
+          mpMap[pname].games++;
+          if (win) mpMap[pname].wins++;
+          // Try to get icon
+          if (!mpMap[pname].iconUrl && p.profileIconId) {
+            mpMap[pname].iconUrl = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/" + p.profileIconId + ".jpg";
+          }
+        });
+      }
+    });
+
+    // Save stats to profile
+    var roleStats = {};
+    Object.keys(roleCount).forEach(function(r) {
+      if (roleCount[r].g > 0) roleStats[r] = { games:roleCount[r].g, wins:roleCount[r].w };
+    });
+    var mostWith = Object.keys(mpMap)
+      .map(function(k){ return mpMap[k]; })
+      .sort(function(a,b){ return b.games - a.games; })
+      .slice(0, 6);
+    var prof = getProfile("lol");
+    prof.roleStats = roleStats;
+    prof.mostWith  = mostWith;
+    saveProfile("lol", prof);
+
+    // Build rows
+    var html = buildLolRows(games.slice(0, 20));
+    bd.innerHTML = html;
+    saveHistory("lol", html);
+
+    // Refresh role/mp sections without full re-render
+    var lms = document.querySelector(".lol-mid-section");
+    if (lms) {
+      var roleOrder = ["top","jungle","mid","adc","support"];
+      var roleLabels = { top:"Horní lajna", jungle:"Džungler", mid:"Středová lajna", adc:"ÚP tahoun", support:"Podpora" };
+      var roleIcons  = { top:"⬆", jungle:"🌲", mid:"⭕", adc:"🏹", support:"🛡️" };
+      var tbody = lms.querySelector(".role-table");
+      if (tbody) {
+        var rowsHtml = '<tr><th>Role</th><th style="text-align:center">Odehráno</th><th>Poměr vítězství</th></tr>';
+        roleOrder.forEach(function(r) {
+          var rs = roleStats[r]; if (!rs) return;
+          var wrR = Math.round(rs.wins/rs.games*100);
+          var wrCls = wrR>=55?"good":wrR<48?"bad":"mid";
+          rowsHtml += '<tr><td style="display:flex;align-items:center;">' +
+            '<span style="font-size:13px;margin-right:6px;">' + roleIcons[r] + '</span>' + e(roleLabels[r]) + '</td>' +
+            '<td style="text-align:center">' + rs.games + '</td>' +
+            '<td><div class="wr-bar-wrap"><div class="wr-bar-bg"><div class="wr-bar-fill '+wrCls+'" style="width:'+Math.min(100,wrR)+'%"></div></div><span class="wr-pct '+wrCls+'">'+wrR+'%</span></div></td></tr>';
+        });
+        tbody.innerHTML = rowsHtml;
+      }
+      var mpCard = lms.querySelectorAll(".mp-card")[0];
+      if (mpCard) {
+        var mpHd = mpCard.querySelector(".section-hd");
+        var mpContent = mostWith.map(function(mp) {
+          var wrM = mp.games > 0 ? Math.round(mp.wins/mp.games*100) : 0;
+          var wrCls = wrM>=55?"good":wrM<48?"bad":"mid";
+          var iconHtml = mp.iconUrl ? '<div class="mp-icon"><img src="'+mp.iconUrl+'"></div>' : '<div class="mp-icon" style="font-size:13px;">👤</div>';
+          return '<div class="mp-row">' + iconHtml +
+            '<div style="flex:1;min-width:0"><div class="mp-name">' + e(mp.name) + '</div><div class="mp-rank">' + e(mp.rank||"") + '</div></div>' +
+            '<div class="mp-games">' + mp.games + 'x</div>' +
+            '<div class="mp-wr '+wrCls+'">' + wrM + '%</div></div>';
+        }).join("") || '<div class="match-loading">Žádná data.</div>';
+        mpCard.innerHTML = '<div class="section-hd">S kým hraje</div>' + mpContent;
+      }
+    }
+  });
+}
+
+function toggleMatchExpand(el) {
+  el.classList.toggle("expanded");
+}
+
+function buildLolRows(games) {
+  var DDVER = "15.8.1";
+  return games.map(function(m) {
+    var p     = m.participants && m.participants[0];
+    var stats = p ? (p.stats || {}) : {};
+    var win   = stats.win;
+    var cid   = p ? (p.championId || 0) : 0;
+    var imgUrl = cid ? "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/" + cid + ".png" : "";
+    var k=stats.kills||0, d=stats.deaths||0, a=stats.assists||0;
+    var durSec = m.gameDuration || 0;
+    var durMin = durSec ? Math.floor(durSec/60)+"m" : "";
+    var durFull = durSec ? Math.floor(durSec/60)+"m "+String(durSec%60).padStart(2,"0")+"s" : "";
+    var wl = win ? "win" : "loss";
+    var wlLetter = win ? "W" : "L";
+    var isRanked = (m.queueId===420||m.queueId===440);
+
+    // LP change
+    var lp = stats.rankedRatingChange !== undefined ? stats.rankedRatingChange
+           : stats.ratingEarned       !== undefined ? stats.ratingEarned : null;
+    var lpHtml = "";
+    if (isRanked && lp !== null && lp !== undefined) {
+      var lc = parseInt(lp);
+      if (!isNaN(lc)) {
+        var lpcls = lc >= 0 ? "pos" : "neg";
+        lpHtml = '<span class="match-lp ' + lpcls + '">' + (lc>=0?"+":"") + lc + ' LP</span>';
+      }
+    }
+
+    // Items
+    var itemIds = [];
+    for (var i=0; i<=6; i++) {
+      var id = stats["item"+i];
+      if (id && id > 0) itemIds.push(id);
+    }
+    var itemsHtml = itemIds.map(function(id) {
+      return '<div class="item-icon"><img src="https://ddragon.leagueoflegends.com/cdn/' + DDVER + '/img/item/' + id + '.png" onerror="this.parentNode.style.display=\'none\'"></div>';
+    }).join("");
+
+    // Time ago
+    var timeAgo = formatTimeAgo(m.gameCreation);
+
+    return '<div class="match-row" onclick="toggleMatchExpand(this)">' +
+      // Normal row
+      '<div class="match-row-main ' + wl + '">' +
+        '<div class="match-champ">' + (imgUrl?'<img src="'+imgUrl+'" onerror="this.style.display=\'none\'">':'?') + '</div>' +
+        '<div class="match-basic">' +
+          '<div class="match-kda-line">' + k+"/"+d+"/"+a + '</div>' +
+          '<div class="match-dur-line">' + durMin + '</div>' +
+        '</div>' +
+        '<div class="match-wl-badge ' + wl + '">' + wlLetter + '</div>' +
+      '</div>' +
+      // Expanded detail
+      '<div class="match-row-detail">' +
+        '<div class="match-expand-left">' +
+          '<div class="match-expand-badge ' + wl + '">' + wlLetter + '</div>' +
+          lpHtml +
+        '</div>' +
+        '<span class="match-detail-kda">' + k+"/"+d+"/"+a + '</span>' +
+        '<span class="match-detail-dur">' + durFull + '</span>' +
+        (itemsHtml ? '<div class="match-items">' + itemsHtml + '</div>' : '') +
+        '<span class="match-time-ago">' + timeAgo + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── TFT — DDragon cache + full history ────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+var _ddVersion  = null;   // "15.8.1"
+var _tftChamps  = null;   // { characterId: { name, image } }
+var _tftAugs    = null;   // { augId: { name, image } }
+var _tftItems   = null;   // { itemId: { name, image } }
+var _ddFetching = false;
+
+function getDDragonData(cb) {
+  if (_ddVersion && _tftChamps && _tftAugs && _tftItems) { cb(); return; }
+  if (_ddFetching) { setTimeout(function(){ getDDragonData(cb); }, 400); return; }
+  _ddFetching = true;
+
+  // Step 1: get latest version
+  overwolf.web.sendHttpRequest(
+    "https://ddragon.leagueoflegends.com/api/versions.json",
+    overwolf.web.enums.HttpRequestMethods["GET"],
+    [{key:"Accept",value:"application/json"}], "",
+    function(r) {
+      if (!r.success || !r.data) { _ddFetching=false; cb(); return; }
+      try { _ddVersion = JSON.parse(r.data)[0]; } catch(ex) { _ddFetching=false; cb(); return; }
+
+      var base = "https://ddragon.leagueoflegends.com/cdn/" + _ddVersion + "/data/en_US/";
+      var pending = 3;
+      function done() { if (--pending === 0) { _ddFetching=false; cb(); } }
+
+      // Champions
+      overwolf.web.sendHttpRequest(base+"tft-champion.json",
+        overwolf.web.enums.HttpRequestMethods["GET"],
+        [{key:"Accept",value:"application/json"}], "",
+        function(rc) {
+          try { _tftChamps = JSON.parse(rc.data).data; } catch(ex) { _tftChamps = {}; }
+          done();
+        });
+
+      // Augments
+      overwolf.web.sendHttpRequest(base+"tft-augments.json",
+        overwolf.web.enums.HttpRequestMethods["GET"],
+        [{key:"Accept",value:"application/json"}], "",
+        function(ra) {
+          try { _tftAugs = JSON.parse(ra.data).data; } catch(ex) { _tftAugs = {}; }
+          done();
+        });
+
+      // Items
+      overwolf.web.sendHttpRequest(base+"tft-item.json",
+        overwolf.web.enums.HttpRequestMethods["GET"],
+        [{key:"Accept",value:"application/json"}], "",
+        function(ri) {
+          try { _tftItems = JSON.parse(ri.data).data; } catch(ex) { _tftItems = {}; }
+          done();
+        });
+    }
+  );
+}
+
+// Champion image — extracts set number from character_id
+function tftChampImg(characterId) {
+  if (!characterId) return "";
+  var cid   = characterId.toLowerCase();
+  // Extract set number from "TFT14_Jinx" → 14, "TFT9b_..." → 9
+  var match = cid.match(/^tft(\d+)[a-z]?_/);
+  var setN  = match ? match[1] : null;
+
+  // Try DDragon data first
+  if (_tftChamps && _ddVersion) {
+    var entry = _tftChamps[characterId] || _tftChamps[characterId.replace(/tft\d+[a-z]?_/i,"TFT"+setN+"_")];
+    if (entry && entry.image && entry.image.full) {
+      return "https://ddragon.leagueoflegends.com/cdn/" + _ddVersion + "/img/tft-champion/" + entry.image.full;
+    }
+  }
+  // Community Dragon fallback (handles set automatically)
+  if (setN) {
+    return "https://raw.communitydragon.org/latest/game/assets/ux/tft/championsplashes/" +
+      cid + "_mobile.tft_set" + setN + ".png";
+  }
+  // Generic fallback
+  return "https://raw.communitydragon.org/latest/game/assets/ux/tft/championsplashes/" +
+    cid + "_mobile.tft_set14.png";
+}
+
+// Augment image from DDragon
+function tftAugImg(augId) {
+  if (!augId || !_tftAugs || !_ddVersion) return "";
+  var entry = _tftAugs[augId];
+  if (entry && entry.image && entry.image.full) {
+    return "https://ddragon.leagueoflegends.com/cdn/" + _ddVersion + "/img/tft-augment/" + entry.image.full;
+  }
+  return "";
+}
+
+// Item image from DDragon
+function tftItemImg(itemId) {
+  if (!itemId || !_tftItems || !_ddVersion) return "";
+  var entry = _tftItems[itemId];
+  if (entry && entry.image && entry.image.full) {
+    return "https://ddragon.leagueoflegends.com/cdn/" + _ddVersion + "/img/tft-item/" + entry.image.full;
+  }
+  return "";
+}
+
+// Robustně extrahuj placement z různých LCU formátů
+function extractPlacement(p) {
+  if (!p) return 0;
+  // Direct field (public API / some LCU versions)
+  var direct = parseInt(p.placement || p.PLACEMENT || p.gamePlacement || p.finalPlacement) || 0;
+  if (direct >= 1 && direct <= 8) return direct;
+  // Under .stats
+  var s = p.stats || {};
+  var fromStats = parseInt(s.placement || s.PLACEMENT || s.player_placement || s.gamePlacement || s.final_placement) || 0;
+  if (fromStats >= 1 && fromStats <= 8) return fromStats;
+  // Nested .json field (some LCU versions)
+  if (p.json) {
+    try {
+      var j = typeof p.json === "string" ? JSON.parse(p.json) : p.json;
+      var fromJson = parseInt(j.placement || j.gamePlacement) || 0;
+      if (fromJson >= 1 && fromJson <= 8) return fromJson;
+    } catch(ex){}
+  }
+  return 0;
+}
+
+// Extrahuj units (handles both LCU formats)
+function extractUnits(p) {
+  if (!p) return [];
+  var s = p.stats || {};
+  // Direct on participant (public API)
+  var units = p.units || s.units || [];
+  // Zkus json field (LCU formát)
+  if ((!units || !units.length) && p.json) {
+    try {
+      var j = typeof p.json === "string" ? JSON.parse(p.json) : p.json;
+      units = j.units || [];
+    } catch(ex) {}
+  }
+  if (!Array.isArray(units)) return [];
+  return units;
+}
+
+// Extrahuj augments
+function extractAugments(p) {
+  if (!p) return [];
+  var s = p.stats || {};
+  var augs = p.augments || s.augments || [];
+  // Zkus json field (LCU formát)
+  if ((!augs || !augs.length) && p.json) {
+    try {
+      var j = typeof p.json === "string" ? JSON.parse(p.json) : p.json;
+      augs = j.augments || [];
+    } catch(ex) {}
+  }
+  if (!Array.isArray(augs)) return [];
+  return augs;
+}
+
+// Extrahuj level
+function extractLevel(p) {
+  if (!p) return 0;
+  var s = p.stats || {};
+  var lvl = parseInt(p.level || s.level) || 0;
+  if (!lvl && p.json) {
+    try {
+      var j = typeof p.json === "string" ? JSON.parse(p.json) : p.json;
+      lvl = parseInt(j.level) || 0;
+    } catch(ex) {}
+  }
+  return lvl;
+}
+
+// Najdi správného participanta
+function findParticipant(m, myPuuid) {
+  var parts = m.participants || (m.info && m.info.participants) || [];
+  if (!parts.length) return null;
+  // Hledej podle puuid - zkus různé formáty
+  var found = null;
+  if (parts.find) {
+    found = parts.find(function(x) {
+      if (x.puuid === myPuuid) return true;
+      // Zkus v json fieldu (starší LCU formát)
+      if (x.json) {
+        try {
+          var j = typeof x.json === "string" ? JSON.parse(x.json) : x.json;
+          if (j.puuid === myPuuid) return true;
+        } catch(ex) {}
+      }
+      return false;
+    });
+  }
+  // LCU endpoint filtruje za nás — participants[0] je náš hráč
+  return found || parts[0];
+}
+
+// Queue name for TFT
+function tftQueueName(qid) {
+  var names = {
+    1090:"TFT Normal", 1100:"TFT Ranked", 1130:"TFT Hyper Roll",
+    1160:"TFT Double Up", 1180:"TFT Turbo", 6000:"TFT Ranked",
+    1400:"Inkborn Fables"
+  };
+  return names[qid] || (qid ? "TFT #"+qid : "TFT");
+}
+
+function loadTftHistory(puuid, bg, bd) {
+  var ep = "/lol-match-history/v1/products/tft/" + puuid + "/matches?begIndex=0&endIndex=20";
+  bg.lcuRequest("GET", ep, null, function(hist) {
+    var games;
+    if (Array.isArray(hist))                               games = hist;
+    else if (hist && Array.isArray(hist.games))            games = hist.games;
+    else if (hist && hist.games && Array.isArray(hist.games.games)) games = hist.games.games;
+    else                                                   games = [];
+
+    // Pokud hlavní endpoint vrátil prázdné, zkus alternativní
+    if (!games.length) {
+      console.log("[Sidekick TFT] Primary endpoint empty, trying fallback...");
+      var ep2 = "/lol-match-history/v3/matchlist/account/" + puuid + "?startIndex=0&endIndex=20&gameType=tft";
+      bg.lcuRequest("GET", ep2, null, function(hist2) {
+        var games2 = [];
+        if (Array.isArray(hist2)) games2 = hist2;
+        else if (hist2 && Array.isArray(hist2.games)) games2 = hist2.games;
+        else if (hist2 && hist2.games && Array.isArray(hist2.games.games)) games2 = hist2.games.games;
+        if (!games2.length) {
+          console.log("[Sidekick TFT] Fallback also empty. hist:", JSON.stringify(hist).substring(0,500), "hist2:", JSON.stringify(hist2).substring(0,500));
+          bd.innerHTML = '<div class="match-loading">' + t("noTftHistory") + '</div>';
+          return;
+        }
+        _processTftGames(games2, puuid, bd);
+      });
+      return;
+    }
+
+    _processTftGames(games, puuid, bd);
+  });
+}
+
+function _processTftGames(games, puuid, bd) {
+    if (!games.length) { bd.innerHTML = '<div class="match-loading">' + t("noTftHistory") + '</div>'; return; }
+
+    // Stats
+    var placements = [0,0,0,0,0,0,0,0];
+    var totalPlace = 0, count = 0;
+    games.forEach(function(m) {
+      var p  = findParticipant(m, puuid);
+      var pl = extractPlacement(p);
+      if (pl >= 1 && pl <= 8) { placements[pl-1]++; totalPlace+=pl; count++; }
+    });
+
+    var avgPlace = count > 0 ? totalPlace / count : 0;
+    var top4     = placements[0]+placements[1]+placements[2]+placements[3];
+    var top4Rate = count > 0 ? (top4/count)*100 : 0;
+    var winRate  = count > 0 ? (placements[0]/count)*100 : 0;
+
+    var prof = getProfile("tft");
+    prof.placements=placements; prof.avgPlacement=avgPlace; prof.top4Rate=top4Rate;
+    prof.winRate=winRate; prof.wins=top4; prof.losses=count-top4;
+    saveProfile("tft", prof);
+
+    // Fetch DDragon data then render
+    getDDragonData(function() {
+      var html = buildTftRows(games.slice(0,20), puuid);
+      bd.innerHTML = html;
+      saveHistory("tft", html);
+      renderContent(); // update chart
+    });
+}
+
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return "";
+  var diff  = Date.now() - timestamp;
+  var mins  = Math.floor(diff / 60000);
+  var hours = Math.floor(mins / 60);
+  var days  = Math.floor(hours / 24);
+  if (days > 0)  return t("daysAgo",  {n: days});
+  if (hours > 0) return t("hoursAgo", {n: hours});
+  if (mins > 0)  return mins + " min";
+  return t("justNow");
+}
+
+function buildTftRows(games, myPuuid) {
+  var DDRAGON = _ddVersion ? "https://ddragon.leagueoflegends.com/cdn/" + _ddVersion : null;
+
+  return games.map(function(m) {
+    var p    = findParticipant(m, myPuuid);
+    var pl   = extractPlacement(p);
+    var lvl  = extractLevel(p);
+    var units = extractUnits(p).sort(function(a,b){ return (b.rarity||b.cost||0)-(a.rarity||a.cost||0); });
+    var augs  = extractAugments(p);
+    var stats = p ? (p.stats || {}) : {};
+
+    var qid   = m.queueId || (m.info && m.info.queue_id) || 0;
+    var qname = tftQueueName(qid);
+    var isRanked = (qid===1100 || qid===6000);
+
+    // Duration
+    var durSec = m.gameDuration || (m.info && m.info.game_length) || 0;
+    if (durSec > 0 && durSec < 60) durSec = durSec * 60; // sometimes in minutes
+    var dur = durSec > 60 ? Math.floor(durSec/60)+"m "+String(Math.round(durSec%60)).padStart(2,"0")+"s" : "";
+
+    // Timestamp
+    var ts = m.gameCreation || (m.info && m.info.game_datetime) || 0;
+    var timeAgo = formatTimeAgo(ts);
+
+    // LP change
+    var lpHtml = "";
+    if (isRanked) {
+      var lp = parseInt(stats.rankedRatingChange || stats.ratingEarned || stats.mmr_change_to_last_game) || null;
+      if (lp !== null && !isNaN(lp)) {
+        var lpcls = lp >= 0 ? "pos" : "neg";
+        lpHtml = '<span style="font-size:10px;font-weight:700;color:'+(lp>=0?"var(--green)":"var(--red)")+'">'+(lp>=0?"+":"")+lp+' LP</span>';
+      }
+    }
+
+    // Placement display
+    var plColor = pl === 1 ? "var(--gold)" : pl <= 4 ? "var(--green)" : "var(--red)";
+    var plLabel = pl > 0 ? pl+"." : "?";
+
+    // Units HTML (max 8)
+    var unitsHtml = units.slice(0,8).map(function(u) {
+      var cid   = u.character_id || u.characterId || u.id || "";
+      var tier  = parseInt(u.tier || u.stars) || 1;
+      var cost  = parseInt(u.cost || u.rarity) || 1; // DDragon uses "cost", LCU uses "rarity"
+      // rarity in LCU: 0=1-cost, 1=2-cost, 2=3-cost, 3=4-cost, 4=5-cost (Legendary), 6=Unique
+      var unitCost = cost <= 1 ? 1 : cost <= 2 ? 2 : cost <= 3 ? 3 : cost <= 4 ? 4 : 5;
+      var borderColor = ["#9ca3af","#22c55e","#3b82f6","#a855f7","#f59e0b","#ef4444"][Math.min(unitCost,5)] || "var(--border)";
+      var starsHtml = tier >= 3 ? '<span style="color:#ffd700;font-size:6px;">★★★</span>'
+                    : tier >= 2 ? '<span style="color:#c0c0c0;font-size:6px;">★★</span>'
+                    : '<span style="color:#888;font-size:6px;">★</span>';
+      var img = tftChampImg(cid);
+      return '<div style="position:relative;width:28px;height:28px;border-radius:5px;overflow:hidden;border:1.5px solid '+borderColor+';background:var(--surface);flex-shrink:0">' +
+        (img ? '<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">' : '') +
+        '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);text-align:center;line-height:1.4">'+starsHtml+'</div>' +
+      '</div>';
+    }).join("");
+
+    // Augments (small icons with tooltips)
+    var augsHtml = augs.slice(0,3).map(function(augId) {
+      var name  = "";
+      if (_tftAugs && _tftAugs[augId]) name = _tftAugs[augId].name;
+      else name = augId.replace(/TFT\d*_Augment_/i,"").replace(/_/g," ").replace(/([A-Z])/g," $1").trim();
+      var img = tftAugImg(augId);
+      if (img) {
+        return '<div title="'+e(name)+'" style="width:20px;height:20px;border-radius:4px;overflow:hidden;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3)">' +
+          '<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\'<span style=&quot;font-size:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;height:100%&quot;>★</span>\'">' +
+          '</div>';
+      }
+      return '<div title="'+e(name)+'" style="width:20px;height:20px;border-radius:4px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);display:flex;align-items:center;justify-content:center;font-size:8px;color:#a855f7;">A</div>';
+    }).join("");
+
+    return '<div class="tft-match">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;min-width:36px">' +
+        '<div class="tft-placement" style="color:'+plColor+'">'+plLabel+'</div>' +
+        (lvl ? '<div style="font-size:9px;color:var(--sub)">Lvl '+lvl+'</div>' : '') +
+      '</div>' +
+      '<div class="tft-details">' +
+        '<div class="tft-top" style="margin-bottom:4px">' +
+          '<span class="tft-mode">'+e(qname)+'</span>' +
+          lpHtml +
+          '<span class="tft-time">'+timeAgo+'</span>' +
+          (dur ? '<span class="tft-time">'+dur+'</span>' : '') +
+        '</div>' +
+        (unitsHtml ? '<div class="tft-units" style="margin-bottom:4px;">'+unitsHtml+'</div>' : '') +
+        (augsHtml  ? '<div style="display:flex;gap:3px;flex-wrap:nowrap">'+augsHtml+'</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join("");
+}
+
+function refreshValoMatches() {
+  var bg = getBg();
+  var bd = document.getElementById("match-history-bd");
+  if (!bd) return;
+  if (!bg || !bg.valoAuth) { bd.innerHTML = '<div class="match-loading">' + t("riotClientOffline") + '</div>'; return; }
+  bd.innerHTML = '<div class="match-loading">' + t("loadingValo") + '</div>';
+  setTimeout(function() {
+    bd.innerHTML = '<div class="match-loading">' + t("valoComingSoon") + '</div>';
+  }, 500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Riot Tab ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function renderRiot(content) {
+  var lolP  = getProfile("lol");
+  var tftP  = getProfile("tft");
+  var valoP = getProfile("valo");
+  var name  = lolP.name || localStorage.getItem("sk_riotId") || "Riot Hráč";
+  var icon  = lolP.iconUrl || localStorage.getItem("sk_riotIcon");
+  var h     = hashStr(name);
+
+  var lolC  = (lolP.wins||0)+(lolP.losses||0)||40+(h%30);
+  var tftC  = (tftP.wins||0)+(tftP.losses||0)||10+((h>>4)%25);
+  var valoC = (valoP.wins||0)+(valoP.losses||0)||5+((h>>8)%20);
+  var tot   = lolC+tftC+valoC;
+  var lP=Math.round(lolC/tot*100), tP=Math.round(tftC/tot*100), vP=100-lP-tP;
+  if (vP<0) vP=0;
+
+  var pers = lP>=50 ? {i:"🏆",l:"LoL Grinder",s:"Pány netvora v ranked queue"}
+           : tP>=40 ? {i:"🧮",l:"TFT Stratég",s:"Augmenty a comp v DNA"}
+           : vP>=40 ? {i:"🎯",l:"Valo Fragger",s:"Jeden výstřel, jedno srdce"}
+           : {i:"🌀",l:"Riot All-Rounder",s:"Vše trochu, nic moc"};
+
+  // Profile section
+  content.insertAdjacentHTML("beforeend",
+    '<div id="profile-section">' +
+    '<div class="p-avatar">' + (icon ? '<img src="'+icon+'">' : '🎮') + '</div>' +
+    '<div class="p-info"><div class="p-name">' + e(name) + '</div><div class="p-rank" style="color:var(--game-color)">' + t("riotProfile") + '</div></div>' +
+    '<div class="p-actions"><div class="p-action-btn" onclick="doShare()" title="Sdílet">📲</div></div>' +
+    '</div>'
+  );
+
+  // DNA card
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card">' +
+    '<div class="match-hd">' + t("riotDna") + '</div>' +
+    '<div class="dna-wrap">' +
+      '<div class="dna-row"><div class="dna-lbl"><img src="../../assets/games/lol.png">LoL</div><div class="dna-bar-wrap"><div class="dna-bar-fill lol-fill" style="width:0" id="dna-lol"></div></div><div class="dna-pct">'+lP+'%</div></div>' +
+      '<div class="dna-row"><div class="dna-lbl"><img src="../../assets/games/tft.png">TFT</div><div class="dna-bar-wrap"><div class="dna-bar-fill tft-fill" style="width:0" id="dna-tft"></div></div><div class="dna-pct">'+tP+'%</div></div>' +
+      '<div class="dna-row"><div class="dna-lbl"><img src="../../assets/games/valo.png">Valo</div><div class="dna-bar-wrap"><div class="dna-bar-fill valo-fill" style="width:0" id="dna-valo"></div></div><div class="dna-pct">'+vP+'%</div></div>' +
+    '</div>' +
+    '<div class="dna-personality"><div class="pers-icon">'+pers.i+'</div><div><div class="pers-label">Main personality = '+e(pers.l)+'</div><div class="pers-sub">'+e(pers.s)+'</div></div></div>' +
+    '</div>'
+  );
+  setTimeout(function(){
+    var el; el=document.getElementById("dna-lol"); if(el)el.style.width=lP+"%";
+    el=document.getElementById("dna-tft"); if(el)el.style.width=tP+"%";
+    el=document.getElementById("dna-valo"); if(el)el.style.width=vP+"%";
+  }, 80);
+
+  // Fun stats
+  var hours=18+(h%6), clutch=4+(h%7);
+  var throws=["LOW","MEDIUM","HIGH","VERY HIGH"][h%4];
+  var thrCls=throws==="HIGH"||throws==="VERY HIGH"?"warn":throws==="MEDIUM"?"gold":"ok";
+  var now=new Date().getFullYear(), peak=now-1-(h%3), dark=peak-1-(h%2);
+  var arcs=["Glow Up Season","Comeback Arc","Grind Mode","Dark Horse Era","Redemption Arc"];
+  var arc=arcs[h%arcs.length];
+
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card"><div class="match-hd">⚡ Fun Stats</div><div style="padding:0 0 4px">' +
+    '<div class="fun-grid">' +
+      '<div class="fun-item"><div class="fun-item-icon">🧠</div><div class="fun-item-label">Hraješ nejlépe v</div><div class="fun-item-val">'+hours+':00</div></div>' +
+      '<div class="fun-item"><div class="fun-item-icon">🏆</div><div class="fun-item-label">Clutch faktor</div><div class="fun-item-val ok">'+clutch+'/10</div></div>' +
+      '<div class="fun-item"><div class="fun-item-icon">📉</div><div class="fun-item-label">Throw potenciál</div><div class="fun-item-val '+thrCls+'">'+throws+'</div></div>' +
+      '<div class="fun-item"><div class="fun-item-icon">📅</div><div class="fun-item-label">Peak rok</div><div class="fun-item-val gold">'+peak+'</div></div>' +
+    '</div>' +
+    '</div></div>'
+  );
+
+  // Timeline
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card"><div class="match-hd">📍 Timeline</div><div style="padding:2px 0 4px"><div class="timeline">' +
+    '<div class="tl-item"><div class="tl-icon">📅</div><div class="tl-year">'+peak+'</div><div class="tl-desc">Peak — nejlepší winrate</div><div class="tl-badge peak">Peak</div></div>' +
+    '<div class="tl-item"><div class="tl-icon">📉</div><div class="tl-year">'+dark+'</div><div class="tl-desc">Dark era — série proher</div><div class="tl-badge dark">Dark</div></div>' +
+    '<div class="tl-item"><div class="tl-icon">📈</div><div class="tl-year">'+now+'</div><div class="tl-desc">'+e(arc)+'</div><div class="tl-badge now">Now</div></div>' +
+    '</div></div></div>'
+  );
+
+  // Roast
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card"><div class="match-hd">🧠 AI Roast</div><div style="padding:0 0 4px">' +
+    '<button class="roast-btn" onclick="doRoast()">👉&nbsp;Roast me</button>' +
+    '<div id="roast-output" class="roast-output"></div>' +
+    '<div id="roast-counter" style="text-align:right;font-size:9px;color:var(--sub);margin-top:4px;display:none"></div>' +
+    '</div></div>'
+  );
+
+  // Share
+  content.insertAdjacentHTML("beforeend",
+    '<div class="match-card"><div class="match-hd">📲 Share</div><div style="padding:0 0 4px">' +
+    '<button class="share-btn" onclick="doShare()">✨&nbsp;Generovat Riot Personality</button>' +
+    '<div id="share-output" class="share-output"></div>' +
+    '<div id="share-copy" class="share-copy">✓ Zkopírováno!</div>' +
+    '</div></div>'
+  );
+}
+
+var ROASTS = [
+  "Nehraješ LoL — ty ho daruješ nepřátelům. Krok za krokem.",
+  "Tvůj KDA vypadá jako PSČ někde v horách.",
+  "LP neztrácel/a — jen jsi je věnoval/a potřebným.",
+  "Flash máš na F, ale použiješ ho 0,3 sekundy po tom, co by pomohl.",
+  "Tvůj CS je důkaz, že matematika se ve škole opravdu nevyplatila.",
+  "Jsi v ranked, protože unranked byl příliš stresující pro nepřátele.",
+  "Tvůj jungler tě nikdy negankovatelé — to je vzkaz.",
+  "Průměrný kill za 40 minut? To je téměř pracovní výkon.",
+  "Máš 47% winrate. Perfektně vyvážený. Jak by mělo být.",
+  "Jsi typ, co píše 'ff15' v minutě 12.",
+  "5 cs za minutu — konzistentní jako každé jiné tvé selhání.",
+  "Valo crosshair placement: podlaha, strop, všechno mimo hlavu.",
+  "V TFT jsi tak zdatný/á, že druhé místo bereš jako výhru.",
+  "Augmenty vybíráš intuicí. Špatnou intuicí.",
+  "Každou sezonu říkáš 'příští rok climb'. Příští rok je každý rok.",
+  "In-game comms: citáty z filmů a 'kdo to hraje?'",
+  "Rank decay je upomínač: hraješ málo. A špatně.",
+  "Tvůj match history vypadá jako klesající kryptoměna.",
+  "Kdybys hrál/a tak dobře, jak vypadáš sebejistě, byl/a bys Pro.",
+  "Turret dive v minutě 4. Odvaha nebo neznalost? Obojí.",
+  "Teamfight jsi opustil/a, když bylo 4v5 ve váš prospěch.",
+  "Champion pool tak hluboký, že nikdo neví co hraješ. Ani ty.",
+  "Smurfing? Ne, tohle je tvůj main účet.",
+  "Vision score: 4. Za 40 minut. Skvělý výkon.",
+  "Recall? Proč? 20 HP stačí.",
+  "Surrender 3/5 v minutě 22 — ty jsi těch národ.",
+  "Carry role = 'carry the burden of defeat' role.",
+  "Každá hra začíná 'já neflame' a končí 10 zprávami.",
+  "Internet lag je tvé alibi číslo jedna. Vždy.",
+  "Solo queue má tě naučit pracovat s lidmi. Výsledek: 0.",
+  "Jednou jsi dal/a carry game. Ještě o tom mluvíš.",
+  "Ping 'help' 6x za sebou. Pak zemřeš sám/sama.",
+  "Tvoje ult timing je jako filmový twist — příliš pozdě.",
+  "Jsi proof, že LoL je free to play — i tvůj skill.",
+  "Matchmaking tě nefrustuje — ty frustuješ matchmaking.",
+  "Gold IV je tvůj přirozený habitat. Svět je v rovnováze.",
+  "Každá špatná hra je 'sabotovaná' matchmakingem.",
+  "Tvůj micro je výborný. Macro: jako by neexistovalo.",
+  "Věříš, že rank neodpovídá tvému skill levelu. My ne.",
+  "Neplačeš nad prohrou — pláčeš nad LP loss. To je pokrok.",
+];
+var roastIdx = 0;
+
+function hashStr(s) {
+  var h=0; for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h=h&h;} return Math.abs(h);
+}
+
+function doRoast() {
+  roastIdx = (roastIdx+1+Math.floor(Math.random()*4)) % ROASTS.length;
+  var out=document.getElementById("roast-output"), cnt=document.getElementById("roast-counter");
+  if (!out) return;
+  out.style.display="none";
+  setTimeout(function(){ out.style.display="block"; out.textContent='"'+ROASTS[roastIdx]+'"'; if(cnt){cnt.style.display="block";cnt.textContent=(roastIdx+1)+"/"+ROASTS.length+" roastů";} }, 60);
+}
+
+function doShare() {
+  var lolP=getProfile("lol"),tftP=getProfile("tft"),valoP=getProfile("valo");
+  var name=lolP.name||"Riot Hráč", h=hashStr(name);
+  var lolC=(lolP.wins||0)+(lolP.losses||0)||40+(h%30);
+  var tftC=(tftP.wins||0)+(tftP.losses||0)||10+((h>>4)%25);
+  var valoC=(valoP.wins||0)+(valoP.losses||0)||5+((h>>8)%20);
+  var tot=lolC+tftC+valoC;
+  var lP=Math.round(lolC/tot*100), tP=Math.round(tftC/tot*100), vP=100-lP-tP;
+  var clutch=4+(h%7), throws=["LOW","MEDIUM","HIGH","VERY HIGH"][h%4];
+  var now=new Date().getFullYear(), peak=now-1-(h%3);
+  var arcs=["Glow Up Season","Comeback Arc","Grind Mode","Dark Horse Era","Redemption Arc"];
+  var card="🎮 Moje Riot Personality\n━━━━━━━━━━━━━━━━━━━━\n👤 "+name+"\nLoL "+lP+"% │ Valo "+vP+"% │ TFT "+tP+"%\n🏆 Clutch: "+clutch+"/10  📉 Throw: "+throws+"\n📅 Peaked: "+peak+"\n✨ "+arcs[h%arcs.length]+"\n━━━━━━━━━━━━━━━━━━━━\ngenerated by Sidekick";
+  var out=document.getElementById("share-output"), cpy=document.getElementById("share-copy");
+  if(out){out.style.display="block";out.textContent=card;}
+  var fn=function(){if(cpy){cpy.style.display="block";setTimeout(function(){cpy.style.display="none";},2500);}};
+  if(navigator.clipboard){navigator.clipboard.writeText(card).then(fn);}
+  else{var ta=document.createElement("textarea");ta.value=card;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(ex){}document.body.removeChild(ta);fn();}
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Helpers ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function getSpamStatusHtml(fid, gameKey, isOn) {
+  if (!isOn) return '';
+  var spamStatus = currentState.spamStatus || {};
+  var statusKey = null;
+  if (fid === "spamRanked" && gameKey === "lol") statusKey = "lolRanked";
+  else if (fid === "spamFlex" && gameKey === "lol") statusKey = "lolFlex";
+  else if (fid === "spamRanked" && gameKey === "tft") statusKey = "tftRanked";
+  else if (fid === "spamDoubleUp" && gameKey === "tft") statusKey = "tftDoubleUp";
+  if (!statusKey) return '';
+  var status = spamStatus[statusKey];
+  if (!status) return '';
+  var text = '', cls = '';
+  if (status === "lobby") {
+    var members = spamStatus.lobbyMembers || 1;
+    var maxSize = spamStatus.lobbyMaxSize || 5;
+    text = t("lobby") + ' (' + members + '/' + maxSize + ')'; cls = 'lobby';
+  } else if (status === "queue") { text = t("inQueue"); cls = 'queue'; }
+  else if (status === "waiting") { text = t("waiting"); cls = 'waiting'; }
+  if (!text) return '';
+  return '<span class="spam-status ' + cls + '">' + text + '</span>';
+}
+
+function getFeatures(key) {
+  var m = {
+    lol: [
+      {id:"autoAccept",name:t("autoAccept"),desc:t("autoAcceptDesc")},
+      {id:"champSelectAI",name:t("champSelectAI"),desc:t("champSelectAIDesc")},
+      {id:"ingameOverlay",name:t("ingameOverlay"),desc:t("ingameOverlayDesc")},
+      {id:"spamRanked",name:t("spamRanked"),desc:t("spamRankedDesc")},
+      {id:"spamFlex",name:t("spamFlex"),desc:t("spamFlexDesc")}
+    ],
+    tft: [
+      {id:"autoAccept",name:t("autoAccept"),desc:t("autoAcceptTftDesc")},
+      {id:"tftHelper",name:t("tftCompanion"),desc:t("tftCompanionDesc")},
+      {id:"spamRanked",name:t("spamRanked"),desc:t("spamRankedTftDesc")},
+      {id:"spamDoubleUp",name:t("spamDoubleUp"),desc:t("spamDoubleUpDesc")}
+    ],
+    valo: [{id:"overlay",name:t("valoOverlay"),desc:t("valoOverlayDesc")}],
+  };
+  return m[key] || [];
+}
+
+function getSetting(gameKey,fid) {
+  if (fid === "spamRanked" && gameKey === "lol") return settings["spamRankedLol"] === true;
+  if (fid === "spamFlex" && gameKey === "lol") return settings["spamFlexLol"] === true;
+  if (fid === "spamRanked" && gameKey === "tft") return settings["spamRankedTft"] === true;
+  if (fid === "spamDoubleUp" && gameKey === "tft") return settings["spamDoubleUpTft"] === true;
+  if (fid === "ingameOverlay") return settings["ingameOverlay"] !== false;
+  return settings[gameKey+"_"+fid]!==undefined?settings[gameKey+"_"+fid]:true;
+}
+
+function toggleFeat(fid,gameKey) {
+  var bg=getBg();
+  if (fid === "spamRanked" && gameKey === "lol") {
+    var newVal = !getSetting(gameKey, fid);
+    settings["spamRankedLol"] = newVal;
+    if (newVal) settings["spamFlexLol"] = false;
+    if (bg && bg.setSpamRankedLol) bg.setSpamRankedLol(newVal);
+    attachToggles(); return;
+  }
+  if (fid === "spamFlex" && gameKey === "lol") {
+    var newVal = !getSetting(gameKey, fid);
+    settings["spamFlexLol"] = newVal;
+    if (newVal) settings["spamRankedLol"] = false;
+    if (bg && bg.setSpamFlexLol) bg.setSpamFlexLol(newVal);
+    attachToggles(); return;
+  }
+  if (fid === "spamRanked" && gameKey === "tft") {
+    var newVal = !getSetting(gameKey, fid);
+    settings["spamRankedTft"] = newVal;
+    if (newVal) settings["spamDoubleUpTft"] = false;
+    if (bg && bg.setSpamRankedTft) bg.setSpamRankedTft(newVal);
+    attachToggles(); return;
+  }
+  if (fid === "spamDoubleUp" && gameKey === "tft") {
+    var newVal = !getSetting(gameKey, fid);
+    settings["spamDoubleUpTft"] = newVal;
+    if (newVal) settings["spamRankedTft"] = false;
+    if (bg && bg.setSpamDoubleUpTft) bg.setSpamDoubleUpTft(newVal);
+    attachToggles(); return;
+  }
+  if (fid === "ingameOverlay") {
+    var newVal = !getSetting(gameKey, fid);
+    settings["ingameOverlay"] = newVal;
+    if (bg && bg.setIngameOverlay) bg.setIngameOverlay(newVal);
+    attachToggles(); return;
+  }
+  var k=gameKey+"_"+fid; settings[k]=!getSetting(gameKey,fid);
+  try{localStorage.setItem("sk_settings",JSON.stringify(settings));}catch(ex){}
+  if(bg&&bg.setAutoAccept&&fid==="autoAccept") bg.setAutoAccept(settings[k]);
+  attachToggles();
+}
+
+function attachToggles() {
+  document.querySelectorAll(".tog").forEach(function(t) {
+    t.onclick = function(){ toggleFeat(t.dataset.fid,selectedGame); };
+    var on = getSetting(selectedGame,t.dataset.fid)!==false;
+    t.classList.toggle("on",on); t.querySelector(".tog-knob").style.left=on?"18px":"2px";
+  });
+}
+
+function openSearch(){
+  var ov=document.getElementById("search-overlay"); if(!ov) return;
+  ov.classList.add("open"); setTimeout(function(){var i=document.getElementById("search-input");if(i)i.focus();},100);
+}
+function closeSearch(){
+  var ov=document.getElementById("search-overlay"); if(ov)ov.classList.remove("open");
+  var inp=document.getElementById("search-input"); if(inp)inp.value="";
+}
+function onSearchKey(ev){ if(ev.key==="Escape")closeSearch(); }
+function onSearchInput(val){ /* simplified */ }
+function openTracker(url){
+  var p=getProfile(selectedGame); var pn=p.name&&p.name!==t("notLoggedIn")?p.name:null;
+  if(!pn){openSearch();return;}
+  var finalUrl = url.replace("{name}",encodeURIComponent(pn)).replace("{region}",REGION);
+  try{overwolf.utils.openUrlInDefaultBrowser(finalUrl);}catch(ex){}
+}
+function e(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ══════════════════════════════════════════════════════════════
+// ── State updates ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+function onState(state) {
+  currentState = state;
+  lcuConnected  = !!state.lcuPort;
+  valoConnected = !!state.valoConnected;
+
+  if (state.spamRankedLol !== undefined) settings["spamRankedLol"] = state.spamRankedLol;
+  if (state.spamFlexLol !== undefined) settings["spamFlexLol"] = state.spamFlexLol;
+  if (state.spamRankedTft !== undefined) settings["spamRankedTft"] = state.spamRankedTft;
+  if (state.spamDoubleUpTft !== undefined) settings["spamDoubleUpTft"] = state.spamDoubleUpTft;
+  if (state.ingameOverlay !== undefined) settings["ingameOverlay"] = state.ingameOverlay;
+
+  var dot  = document.getElementById("conn-dot");
+  var text = document.getElementById("conn-text");
+  var chip = document.getElementById("phase-chip");
+  if (dot)  dot.className = lcuConnected ? "on" : "";
+  if (text) text.textContent = state.lcuStatus || t("searching");
+  if (chip) {
+    if (state.currentPhase && state.currentPhase !== "None" && state.currentPhase !== "Lobby") {
+      chip.style.display=""; chip.textContent=state.currentPhase;
+    } else chip.style.display="none";
+  }
+
+  if (state.activeGame) {
+    var ak = state.activeGame.short;
+    if (ak !== activeGameKey) {
+      activeGameKey = ak;
+      markLive(ak);
+    }
+  }
+
+  if (state.riotId) {
+    try { localStorage.setItem("sk_riotId", state.riotId); if(state.riotIconUrl) localStorage.setItem("sk_riotIcon",state.riotIconUrl); } catch(ex){}
+  }
+
+  attachToggles();
+}
+
+function loadLcuProfile() {
+  var bg = getBg();
+  if (!bg || !bg.lcuPort) return;
+  bg.lcuRequest("GET", "/lol-summoner/v1/current-summoner", null, function(summ) {
+    if (!summ || !summ.puuid) return;
+    var iconUrl = summ.profileIconId
+      ? "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/" + summ.profileIconId + ".jpg"
+      : null;
+    var name = summ.gameName || summ.displayName || "Player";
+    bg.lcuRequest("GET", "/lol-ranked/v1/ranked-stats/" + summ.puuid, null, function(stats) {
+      var soloQ = ((stats||{}).queues||[]).find(function(q){return q.queueType==="RANKED_SOLO_5x5";});
+      var tftQ  = ((stats||{}).queues||[]).find(function(q){return q.queueType==="RANKED_TFT";});
+      function saveRanked(key, q) {
+        var rank=t("unranked"), w=0, l=0;
+        if (q && q.tier && q.tier!=="NONE") {
+          rank = q.tier.charAt(0)+q.tier.slice(1).toLowerCase()+" "+q.division+" • "+q.leaguePoints+" LP";
+          w=q.wins||0; l=q.losses||0;
+        }
+        var ex = getProfile(key);
+        ex.name=name; ex.rank=rank; ex.wins=w; ex.losses=l;
+        if (iconUrl) ex.iconUrl=iconUrl;
+        ex.puuid=summ.puuid;
+        saveProfile(key, ex);
+      }
+      saveRanked("lol", soloQ);
+      saveRanked("tft", tftQ);
+      renderContent();
+    });
+  });
+}
+
+overwolf.windows.onMessageReceived.addListener(function(msg) {
+  if (msg.id === "stateUpdate") onState(msg.content);
+  if (msg.id === "riotIdReady") loadLcuProfile();
+});
+
+// Init
+document.addEventListener("DOMContentLoaded", function() {
+  // Apply saved theme
+  document.documentElement.setAttribute("data-theme", currentTheme);
+  
+  // Apply translations
+  applyTranslations();
+  
+  buildNav();
+  renderContent();
+  restoreWindowState();
+  var bg = getBg();
+  if (bg) {
+    try { overwolf.windows.sendMessage(bg.state.mainWindowId, "getState", {}, function(){}); } catch(ex){}
+    setTimeout(loadLcuProfile, 500);
+  }
+});
+</script>
+
+  <!-- Riot disclaimer -->
+  <div style="padding:4px 12px;text-align:center;font-size:8px;color:#2a2a3a;background:#060610">
+    Sidekick není schválen ani sponzorován společností Riot Games. Riot Games a všechny související názvy jsou ochranné známky Riot Games, Inc.
+  </div>
+
+</body>
+</html>

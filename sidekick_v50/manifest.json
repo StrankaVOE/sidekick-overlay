@@ -1,0 +1,88 @@
+{
+  "manifest_version": 1,
+  "type": "WebApp",
+  "meta": {
+    "name": "Sidekick",
+    "version": "1.4.8",
+    "minimum-overwolf-version": "0.240.0.0",
+    "author": "Sidekick Team",
+    "icon": "assets/icons/icon.png",
+    "icon_gray": "assets/icons/icon_gray.png",
+    "description": "AI-powered gaming assistant"
+  },
+  "permissions": ["GameInfo","GameEvents","FileSystem","Hotkeys","Web"],
+  "data": {
+    "start_window": "background",
+    "game_targeting": {
+      "type": "dedicated",
+      "game_ids": [10902, 5426, 21640]
+    },
+    "game_events": [10902, 5426, 21640],
+    "windows": {
+      "background": {
+        "file": "background/background.html",
+        "show_in_taskbar": false,
+        "is_background_page": true,
+        "background_optimization": false
+      },
+      "main": {
+        "file": "windows/main/main.html",
+        "show_in_taskbar": true,
+        "transparent": false,
+        "resizable": true,
+        "size": {"width": 1400, "height": 1000},
+        "min_size": {"width": 800, "height": 700},
+        "start_position": {"top": 50, "left": 50}
+      },
+      "champ_select": {
+        "file": "windows/champ_select/champ_select.html",
+        "show_in_taskbar": false,
+        "transparent": true,
+        "resizable": false,
+        "size": {"width": 1550, "height": 840},
+        "start_position": {"top": 0, "left": 0},
+        "focus_game_takeover": "ReleaseOnHidden",
+        "block_top_window_navigation": true,
+        "keep_window_location": true
+      },
+      "ingame_overlay": {
+        "file": "windows/ingame_overlay/ingame_overlay.html",
+        "show_in_taskbar": false,
+        "transparent": true,
+        "resizable": false,
+        "size": {"width": 300, "height": 440},
+        "start_position": {"top": 300, "left": 1600},
+        "focus_game_takeover": "ReleaseOnHidden",
+        "block_top_window_navigation": true,
+        "keep_window_location": true
+      },
+      "team_overlay": {
+        "file": "windows/team_overlay/team_overlay.html",
+        "show_in_taskbar": false,
+        "transparent": true,
+        "resizable": false,
+        "size": {"width": 1550, "height": 900},
+        "start_position": {"top": 0, "left": 0},
+        "focus_game_takeover": "ReleaseOnHidden",
+        "block_top_window_navigation": true,
+        "keep_window_location": true
+      }
+    },
+    "hotkeys": {
+      "toggle_overlay": {
+        "title": "Toggle Team Overlay",
+        "action-type": "custom",
+        "default": "Ctrl+P",
+        "passthrough": true
+      }
+    },
+    "launch_events": [
+      {
+        "event": "GameLaunch",
+        "event_data": {"game_ids": [10902, 5426, 21640]},
+        "start_minimized": true
+      }
+    ],
+    "launcher_events": [10902]
+  }
+}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Sidekick — In-Game</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* Root widget — draggable, resizable */
+body{
+  font-family:'Segoe UI',sans-serif;
+  background:transparent;
+  color:#e5e7eb;
+  overflow:hidden;
+  user-select:none;
+  width:100%;height:100%;
+}
+
+#widget{
+  position:fixed;
+  top:0;left:0;
+  min-width:220px; min-height:120px;
+  background:rgba(8,4,20,.93);
+  border-radius:12px;
+  border:1px solid rgba(124,58,237,.4);
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  width:300px;
+  /* resize handle via JS */
+}
+
+/* ── Drag handle = header ── */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;
+  background:rgba(124,58,237,.2);
+  border-bottom:1px solid rgba(124,58,237,.3);
+  cursor:grab;
+  flex-shrink:0;
+}
+.header:active{cursor:grabbing}
+.header-title{font-size:10px;font-weight:700;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;pointer-events:none}
+.header-btns{display:flex;gap:4px}
+.hbtn{background:none;border:none;color:#6b7280;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1}
+.hbtn:hover{background:rgba(255,255,255,.1);color:#e5e7eb}
+.hbtn.close:hover{color:#f87171}
+
+/* ── Win bar ── */
+.winbar{padding:10px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.winbar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.winbar-pct{font-size:13px;font-weight:800;min-width:34px}
+.pct-ally{color:#60a5fa;text-align:left}
+.pct-enemy{color:#f97316;text-align:right}
+.bar-track{flex:1;height:7px;background:rgba(249,115,22,.3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:#60a5fa;border-radius:4px;transition:width .8s}
+.winbar-label{font-size:9px;color:#4b5563;text-align:center;letter-spacing:1px}
+
+/* ── Content (scrolls when small) ── */
+#widget-body{flex:1;overflow-y:auto;overflow-x:hidden}
+#widget-body::-webkit-scrollbar{width:3px}
+#widget-body::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+.section{padding:10px 12px}
+.section-label{font-size:9px;font-weight:700;color:#7c3aed;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.items-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.item-slot{
+  aspect-ratio:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:4px;cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden;
+}
+.item-slot:hover{border-color:#7c3aed}
+.item-slot img{width:100%;height:auto;border-radius:4px;display:block}
+.item-slot.empty{border-style:dashed;color:#374151;font-size:18px}
+.item-tip{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,.85);font-size:8px;color:#d1d5db;
+  padding:2px 3px;text-align:center;
+  transform:translateY(100%);transition:transform .15s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.item-slot:hover .item-tip{transform:translateY(0)}
+.item-order{position:absolute;top:2px;left:4px;font-size:8px;font-weight:700;color:#7c3aed}
+.divider{height:1px;background:rgba(255,255,255,.06);margin:0 12px}
+.tip-box{padding:10px 12px;font-size:11px;color:#9ca3af;line-height:1.5}
+.tip-box.loading{color:#4b5563;font-style:italic}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(124,58,237,.3);border-top-color:#7c3aed;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+
+/* ── Resize handle ── */
+#resize-handle{
+  position:absolute;bottom:0;right:0;
+  width:16px;height:16px;cursor:se-resize;
+  /* visual triangle */
+  background:linear-gradient(135deg,transparent 50%,rgba(124,58,237,.4) 50%);
+  border-bottom-right-radius:12px;
+}
+</style>
+</head>
+<body>
+<div id="widget">
+  <!-- DRAG = header -->
+  <div class="header" id="drag-handle">
+    <span class="header-title">⚡ SIDEKICK</span>
+    <div class="header-btns">
+      <button class="hbtn" onclick="toggleMinimize()" title="Minimalizovat">—</button>
+      <button class="hbtn close" onclick="hideMe()" title="Zavřít (Ctrl+P)">✕</button>
+    </div>
+  </div>
+
+  <!-- Collapsible body -->
+  <div id="widget-body">
+    <div class="winbar" id="winbar">
+      <div class="winbar-row">
+        <span class="winbar-pct pct-ally"  id="pct-ally">—%</span>
+        <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width:50%"></div></div>
+        <span class="winbar-pct pct-enemy" id="pct-enemy">—%</span>
+      </div>
+      <div class="winbar-label">šance na výhru</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">doporučené itemy</div>
+      <div class="items-grid" id="items-grid">
+        <div class="item-slot empty">?</div>
+        <div class="item-slot empty">?</div>
+        <div class="item-slot empty">?</div>
+        <div class="item-slot empty">?</div>
+        <div class="item-slot empty">?</div>
+        <div class="item-slot empty">?</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="tip-box loading" id="tip-box">
+      <span class="spinner"></span>Načítám analýzu...
+    </div>
+  </div>
+
+  <div id="resize-handle"></div>
+</div>
+
+<script>
+// ── Drag ─────────────────────────────────────────────────────
+var widget = document.getElementById("widget");
+var drag   = document.getElementById("drag-handle");
+
+var dragging = false, dx = 0, dy = 0, startX = 0, startY = 0;
+var posX = 0, posY = 0;
+
+drag.addEventListener("mousedown", function(e) {
+  if (e.target.tagName === "BUTTON") return;
+  dragging = true;
+  startX = e.clientX; startY = e.clientY;
+  dx = posX; dy = posY;
+  e.preventDefault();
+});
+document.addEventListener("mousemove", function(e) {
+  if (!dragging) return;
+  posX = dx + (e.clientX - startX);
+  posY = dy + (e.clientY - startY);
+  widget.style.left = posX + "px";
+  widget.style.top  = posY + "px";
+});
+document.addEventListener("mouseup", function() { dragging = false; });
+
+// ── Resize ────────────────────────────────────────────────────
+var resizing = false, rStartX = 0, rStartW = 0;
+var resizeHandle = document.getElementById("resize-handle");
+
+resizeHandle.addEventListener("mousedown", function(e) {
+  resizing = true;
+  rStartX = e.clientX;
+  rStartW = widget.offsetWidth;
+  e.preventDefault(); e.stopPropagation();
+});
+document.addEventListener("mousemove", function(e) {
+  if (!resizing) return;
+  var w = Math.max(220, rStartW + (e.clientX - rStartX));
+  widget.style.width = w + "px";
+});
+document.addEventListener("mouseup", function() { resizing = false; });
+
+// ── Minimize ─────────────────────────────────────────────────
+var minimized = false;
+function toggleMinimize() {
+  var body = document.getElementById("widget-body");
+  minimized = !minimized;
+  body.style.display = minimized ? "none" : "";
+}
+
+function hideMe() {
+  overwolf.windows.getCurrentWindow(function(r) {
+    overwolf.windows.hide(r.window.id, function() {});
+  });
+}
+</script>
+<script src="ingame_overlay.js"></script>
+</body>
+</html>

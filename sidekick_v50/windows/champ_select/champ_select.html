@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Sidekick – Champ Select</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a14;--panel:#0d0d1a;--border:rgba(255,255,255,0.07);
+  --purple:#7c3aed;--plight:#a78bfa;--gold:#fac775;
+  --green:#4caf50;--red:#f09595;--text:#d4d4d4;--sub:#555566;--r:8px;
+}
+html,body{width:1400px;height:820px;overflow:hidden;background:transparent;
+  font-family:'Segoe UI',sans-serif;color:var(--text);font-size:13px}
+
+#window{width:100%;height:100%;background:rgba(8,8,18,0.97);
+  border:1px solid rgba(124,58,237,0.25);border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden}
+
+/* Titlebar */
+#titlebar{display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;height:36px;background:#080814;
+  border-bottom:1px solid rgba(124,58,237,0.2);cursor:grab;user-select:none;flex-shrink:0}
+#titlebar:active{cursor:grabbing}
+#tb-left{display:flex;align-items:center;gap:8px}
+#logo-box{width:22px;height:22px;background:var(--purple);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+#tb-title{font-size:11px;font-weight:600;letter-spacing:2px;color:var(--plight)}
+#tb-right{display:flex;align-items:center;gap:6px}
+.wbtn{width:24px;height:24px;border-radius:4px;border:none;background:rgba(255,255,255,0.05);
+  color:#666;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.wbtn:hover{background:rgba(255,255,255,0.1);color:#ddd}
+.wbtn.close:hover{background:rgba(248,113,113,0.2);color:var(--red)}
+.monitor-badge{font-size:9px;color:var(--green);background:rgba(76,175,80,0.1);
+  border:1px solid rgba(76,175,80,0.2);padding:2px 7px;border-radius:4px;letter-spacing:.5px}
+
+/* Ban row */
+#ban-row{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 12px;background:#080814;border-bottom:1px solid rgba(255,255,255,0.05);
+  flex-shrink:0;gap:8px}
+.ban-group{display:flex;align-items:center;gap:5px}
+.ban-label{font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.ban-slot{width:30px;height:30px;border-radius:50%;overflow:hidden;
+  background:#1a1a2a;border:1.5px solid #2a2a3a;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:#333}
+.ban-slot img{width:100%;height:100%;object-fit:cover;filter:grayscale(60%) brightness(0.7)}
+.ban-sep{width:1px;height:20px;background:rgba(255,255,255,0.06)}
+
+/* Main grid */
+#layout{flex:1;display:grid;grid-template-columns:240px 1fr 240px;gap:8px;padding:8px;min-height:0}
+
+/* Side panels */
+.side-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  display:flex;flex-direction:column;overflow:hidden}
+.side-header{padding:7px 12px 6px;border-bottom:1px solid var(--border);
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);
+  display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.side-header .accent{color:var(--plight)}
+.side-body{flex:1;overflow-y:auto;padding:7px}
+.side-body::-webkit-scrollbar{width:3px}
+.side-body::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:2px}
+
+/* Player rows */
+.player-row{display:flex;align-items:center;gap:7px;padding:4px 5px;border-radius:6px;
+  margin-bottom:4px;border:1px solid transparent;transition:background .1s}
+.player-row:hover{background:rgba(255,255,255,0.03)}
+.player-row.is-me{border-color:rgba(124,58,237,0.3);background:rgba(124,58,237,0.06)}
+.player-row.is-enemy{flex-direction:row-reverse}
+.player-row.is-enemy .player-info{text-align:right}
+.champ-icon{width:34px;height:34px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,0.1);flex-shrink:0}
+.champ-icon-ph{width:34px;height:34px;border-radius:50%;background:#1a1a2a;
+  border:2px solid #2a2a3a;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#333;flex-shrink:0}
+.player-info{flex:1;min-width:0}
+.player-name{font-size:11px;font-weight:600;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-sub{font-size:10px;color:var(--sub);margin-top:1px}
+.player-row.is-me .player-name{color:var(--plight)}
+.wr-badge{font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;flex-shrink:0;white-space:nowrap}
+.wr-good{background:rgba(76,175,80,0.12);color:var(--green)}
+.wr-bad{background:rgba(240,149,149,0.12);color:var(--red)}
+.wr-mid{background:rgba(255,255,255,0.05);color:#666}
+.laner-tag{font-size:9px;background:rgba(240,149,149,0.15);color:var(--red);
+  padding:1px 4px;border-radius:3px;flex-shrink:0}
+
+/* Spell mini badges on player rows */
+.spell-mini{display:flex;gap:2px;flex-shrink:0}
+.spell-mini-box{width:18px;height:18px;border-radius:3px;background:#1a2a3a;
+  border:1px solid rgba(55,138,221,0.3);display:flex;align-items:center;
+  justify-content:center;font-size:8px;color:#85b7eb;font-weight:700}
+
+/* Sidepanel blocks */
+.sp-block{background:rgba(255,255,255,0.02);border:1px solid var(--border);
+  border-radius:7px;padding:8px;margin-bottom:7px}
+.sp-block:last-child{margin-bottom:0}
+.sp-block-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--purple);margin-bottom:6px}
+.sp-block-title.red{color:var(--red)}
+.sp-item{display:flex;align-items:flex-start;gap:5px;padding:3px 0;
+  border-bottom:1px solid rgba(255,255,255,0.03);font-size:11px;color:#999;line-height:1.5}
+.sp-item:last-child{border-bottom:none}
+.sp-num{font-size:10px;color:var(--purple);font-weight:700;min-width:14px;flex-shrink:0}
+.sp-num.red{color:var(--red)}
+.sp-champ{font-size:11px;color:#ddd;font-weight:600}
+.sp-sub{font-size:10px;color:var(--sub);margin-top:1px}
+.sp-wr{font-size:10px;color:var(--green);font-weight:600;margin-left:auto;white-space:nowrap}
+.sp-bullet{color:var(--purple);min-width:8px;flex-shrink:0}
+.sp-bullet.warn{color:var(--gold)}
+.sp-bullet.danger{color:var(--red)}
+.sp-tip{font-size:11px;color:#999;line-height:1.5}
+
+/* Center */
+#center{display:flex;flex-direction:column;gap:7px;min-height:0}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;flex-shrink:0}
+.card-header{padding:6px 12px 5px;border-bottom:1px solid var(--border);
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);
+  display:flex;align-items:center;gap:6px}
+.card-header .icon{color:var(--plight);font-size:11px}
+.card-body{padding:9px 12px}
+
+/* Win bar */
+#winbar-nums{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-bottom:5px}
+#ally-win{color:var(--green)}
+#enemy-win{color:var(--red)}
+#winbar-track{height:6px;background:rgba(240,149,149,0.25);border-radius:3px;overflow:hidden}
+#winbar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .6s ease}
+
+/* Matchup bar */
+#matchup-bar{background:var(--panel);border:1px solid rgba(124,58,237,0.2);
+  border-radius:var(--r);padding:9px 12px;flex-shrink:0}
+.matchup-inner{display:flex;align-items:center;gap:10px}
+.vs-port{width:32px;height:32px;border-radius:6px;object-fit:cover;background:#1a1a2a}
+.vs-sep{font-size:10px;color:var(--sub)}
+.matchup-wr-big{font-size:20px;font-weight:800}
+.matchup-stat{flex:1}
+.matchup-label{font-size:9px;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;font-weight:700}
+.matchup-track{height:4px;background:#1e1e3a;border-radius:2px;margin-top:3px;overflow:hidden}
+.matchup-fill{height:100%;border-radius:2px}
+.matchup-tip{flex:1;background:rgba(250,199,117,0.05);border:1px solid rgba(250,199,117,0.12);
+  border-radius:6px;padding:6px 8px;font-size:11px;color:#bbb;line-height:1.5}
+
+/* Center scroll */
+#center-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;min-height:0}
+#center-scroll::-webkit-scrollbar{width:3px}
+#center-scroll::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:2px}
+
+/* Rec items — scrollable list */
+#rec-list{max-height:280px;overflow-y:auto}
+#rec-list::-webkit-scrollbar{width:3px}
+#rec-list::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:2px}
+.rec-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;
+  margin-bottom:3px;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.rec-item:last-child{margin-bottom:0}
+.rec-item:hover,.rec-item.top{background:rgba(124,58,237,0.07);border-color:rgba(124,58,237,0.2)}
+.rec-icon{width:34px;height:34px;border-radius:5px;object-fit:cover;flex-shrink:0;background:#1a1a2a}
+.rec-name{font-size:12px;font-weight:700;color:#e0e0e0}
+.rec-reason{font-size:10px;color:var(--sub);margin-top:1px}
+.rec-tag{font-size:9px;padding:1px 5px;border-radius:3px;margin-top:2px;display:inline-block;font-weight:600}
+.tag-good{background:rgba(76,175,80,0.12);color:var(--green)}
+.tag-neutral{background:rgba(255,255,255,0.06);color:#666}
+.tag-hard{background:rgba(240,149,149,0.12);color:var(--red)}
+.rec-wr-col{text-align:right;flex-shrink:0}
+.rec-wr-big{font-size:14px;font-weight:800;color:#e0e0e0}
+.rec-wr-sub{font-size:9px;color:var(--sub)}
+
+/* Runes + Spells combined card */
+.rune-spell-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rs-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--sub);margin-bottom:7px}
+.rune-keystone{font-size:13px;font-weight:700;color:#e0e0e0}
+.rune-path{font-size:10px;color:var(--sub);margin-top:2px}
+.btn-import{width:100%;margin-top:7px;font-size:11px;padding:6px;border-radius:6px;border:none;
+  background:var(--purple);color:#fff;cursor:pointer;font-weight:600;transition:opacity .15s}
+.btn-import:hover{opacity:.85}
+.btn-import:disabled{opacity:.35;cursor:default}
+.spell-row{display:flex;gap:6px}
+.spell-box{width:36px;height:36px;border-radius:6px;background:#1a2a3a;
+  border:1px solid rgba(55,138,221,0.3);display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:#85b7eb;flex-shrink:0}
+.spell-name{font-size:11px;font-weight:600;color:#ccc}
+.spell-cd{font-size:10px;color:#378add}
+.spell-note{font-size:10px;color:var(--sub);margin-top:1px}
+.btn-import-spells{width:100%;margin-top:7px;font-size:11px;padding:6px;border-radius:6px;border:none;
+  background:#1e2a3a;color:#85b7eb;cursor:pointer;font-weight:600;
+  border:1px solid rgba(55,138,221,0.3);transition:opacity .15s}
+.btn-import-spells:hover{opacity:.85}
+
+/* AI */
+.ai-response{min-height:34px;font-size:12px;color:#bbb;line-height:1.6;
+  padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:7px}
+.ai-response.loading{color:var(--sub);font-style:italic}
+.ai-input-row{display:flex;gap:6px}
+.ai-input{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;color:#ddd;font-size:12px;outline:none}
+.ai-input:focus{border-color:var(--purple)}
+.btn-ask{padding:6px 13px;background:var(--purple);border:none;border-radius:6px;
+  color:#fff;font-size:12px;cursor:pointer;font-weight:600}
+.quick-btns{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.quick-btn{font-size:10px;padding:3px 8px;border-radius:10px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  color:#777;cursor:pointer;transition:all .15s}
+.quick-btn:hover{background:rgba(124,58,237,0.12);border-color:var(--purple);color:var(--plight)}
+
+/* Loading */
+#loading{position:absolute;inset:0;background:rgba(8,8,18,0.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:100;border-radius:12px}
+#loading.hidden{display:none}
+.spinner{width:32px;height:32px;border:3px solid rgba(124,58,237,0.3);
+  border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div id="window">
+
+  <!-- TITLEBAR -->
+  <div id="titlebar">
+    <div id="tb-left">
+      <div id="logo-box">S</div>
+      <span id="tb-title">SIDEKICK</span>
+      <span style="font-size:10px;color:var(--sub);background:rgba(255,255,255,0.04);padding:2px 7px;border-radius:4px;margin-left:4px">Champ Select</span>
+    </div>
+    <div id="tb-right">
+      <span class="monitor-badge" id="monitor-badge">Monitor 2</span>
+      <button class="wbtn" onclick="minimizeMe()">—</button>
+      <button class="wbtn close" onclick="closeMe()">✕</button>
+    </div>
+  </div>
+
+  <!-- BAN ROW -->
+  <div id="ban-row">
+    <div class="ban-group">
+      <span class="ban-label">Vaše bany</span>
+      <div id="ally-bans" style="display:flex;gap:4px">
+        <div class="ban-slot">?</div><div class="ban-slot">?</div><div class="ban-slot">?</div>
+        <div class="ban-slot">?</div><div class="ban-slot">?</div>
+      </div>
+    </div>
+    <div class="ban-sep"></div>
+    <div style="font-size:9px;color:var(--sub);letter-spacing:1px;text-transform:uppercase">Bany</div>
+    <div class="ban-sep"></div>
+    <div class="ban-group" style="flex-direction:row-reverse">
+      <span class="ban-label">Enemy bany</span>
+      <div id="enemy-bans" style="display:flex;gap:4px;flex-direction:row-reverse">
+        <div class="ban-slot">?</div><div class="ban-slot">?</div><div class="ban-slot">?</div>
+        <div class="ban-slot">?</div><div class="ban-slot">?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div id="layout">
+
+    <!-- LEFT: Ally team + Synergy -->
+    <div class="side-panel">
+      <div class="side-header">
+        <span>Tvůj tým</span>
+        <span class="accent" id="my-lane-label"></span>
+      </div>
+      <div class="side-body">
+        <div id="ally-list"></div>
+        <div style="height:6px"></div>
+        <div class="sp-block">
+          <div class="sp-block-title">Synergie týmu</div>
+          <div id="sp-syn"><div class="sp-item" style="color:var(--sub);font-size:11px">Analyzuji...</div></div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-block-title">Meta picks · <span id="sp-lane">Mid</span></div>
+          <div id="sp-meta"><div class="sp-item" style="color:var(--sub);font-size:11px">Načítám...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div id="center">
+
+      <div class="card">
+        <div class="card-body" style="padding:9px 13px">
+          <div id="winbar-nums">
+            <span id="ally-win">—</span>
+            <span style="font-size:10px;color:var(--sub);font-weight:400;align-self:center">ŠANCE NA VÝHRU</span>
+            <span id="enemy-win">—</span>
+          </div>
+          <div id="winbar-track"><div id="winbar-fill" style="width:50%"></div></div>
+        </div>
+      </div>
+
+
+      <!-- AP/AD kompozice -->
+      <div id="apad-bar" style="background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:7px 12px;flex-shrink:0">
+        <div style="font-size:9px;color:var(--sub);text-align:center">Načítám kompozici...</div>
+      </div>
+
+            <div id="matchup-bar">
+        <div class="matchup-inner">
+          <div style="display:flex;align-items:center;gap:6px">
+            <img id="my-port" class="vs-port" src="" onerror="this.style.display='none'">
+            <span class="vs-sep">vs</span>
+            <img id="en-port" class="vs-port" src="" onerror="this.style.display='none'">
+          </div>
+          <div class="matchup-stat">
+            <div class="matchup-label">Tvůj WR v matchupu</div>
+            <div style="display:flex;align-items:baseline;gap:7px">
+              <div class="matchup-wr-big" id="matchup-wr">—</div>
+              <span style="font-size:10px;color:var(--sub)" id="matchup-games"></span>
+            </div>
+            <div class="matchup-track"><div class="matchup-fill" id="matchup-fill" style="width:50%;background:var(--gold)"></div></div>
+          </div>
+          <div class="matchup-tip" id="matchup-tip">Analyzuji matchup...</div>
+        </div>
+      </div>
+
+      <div id="center-scroll">
+
+        <!-- Recs — scrollable -->
+        <div class="card">
+          <div class="card-header">
+            <span class="icon">★</span>
+            <span id="rec-label">Doporučené champy</span>
+            <span style="margin-left:auto;font-size:9px;color:var(--sub)" id="rec-count"></span>
+          </div>
+          <div class="card-body" style="padding:7px 10px">
+            <div id="rec-list"></div>
+          </div>
+        </div>
+
+        <!-- Runes + Spells vedle sebe -->
+        <div class="card">
+          <div class="card-header"><span class="icon">◈</span>Runy &amp; Summoner spelly</div>
+          <div class="card-body">
+            <div class="rune-spell-grid">
+              <div>
+                <div class="rs-section-title">Runy</div>
+                <div class="rune-keystone" id="rune-keystone">—</div>
+                <div class="rune-path" id="rune-path">—</div>
+                <button class="btn-import" id="rune-import-btn" onclick="importRunes()" disabled>Importovat runy</button>
+              </div>
+              <div>
+                <div class="rs-section-title">Summoner spelly</div>
+                <div class="spell-row" style="margin-bottom:6px">
+                  <div id="spell1-box" class="spell-box">F</div>
+                  <div style="flex:1">
+                    <div class="spell-name" id="spell1-name">Flash</div>
+                    <div class="spell-cd" id="spell1-cd">CD: 300s</div>
+                  </div>
+                  <div id="spell2-box" class="spell-box" style="background:#1a3a1a;border-color:rgba(76,175,80,0.3);color:var(--green)">I</div>
+                  <div style="flex:1">
+                    <div class="spell-name" id="spell2-name">Ignite</div>
+                    <div class="spell-cd" id="spell2-cd">CD: 180s</div>
+                  </div>
+                </div>
+                <div class="spell-note" id="spell-note" style="margin-bottom:4px"></div>
+                <button class="btn-import-spells" id="spell-import-btn" onclick="importSpells()">Nastavit spelly</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI chat -->
+        <div class="card">
+          <div class="card-header"><span class="icon">⚡</span>Zeptej se Sidekicku</div>
+          <div class="card-body">
+            <div class="ai-response" id="ai-response">Analyzuji tým...</div>
+            <div class="quick-btns">
+              <button class="quick-btn" onclick="quickAsk('Jaké runy mám vzít?')">Runy?</button>
+              <button class="quick-btn" onclick="quickAsk('Jaký je skill order?')">Skill order?</button>
+              <button class="quick-btn" onclick="quickAsk('Jak hrát tento matchup?')">Matchup?</button>
+              <button class="quick-btn" onclick="quickAsk('Co mám buildovat?')">Build?</button>
+            </div>
+            <div class="ai-input-row">
+              <input class="ai-input" id="ai-input" placeholder="Napiš otázku..."
+                onkeydown="if(event.key==='Enter') askAI()">
+              <button class="btn-ask" onclick="askAI()">→</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Enemy team + Counter tipy -->
+    <div class="side-panel">
+      <div class="side-header">
+        <span>Enemáci</span>
+        <span style="color:var(--red);font-size:9px" id="enemy-threat-count"></span>
+      </div>
+      <div class="side-body">
+        <div id="enemy-list" style="margin-bottom:8px"></div>
+        <div class="sp-block">
+          <div class="sp-block-title red">Counter tipy vs tým</div>
+          <div id="sp-counter"><div class="sp-item" style="color:var(--sub);font-size:11px">—</div></div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-block-title red">Největší hrozby</div>
+          <div id="sp-threats"><div class="sp-item" style="color:var(--sub);font-size:11px">—</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Riot disclaimer (povinné) -->
+  <div style="padding:3px 12px;text-align:center;font-size:8px;color:#333;background:#060610;flex-shrink:0;border-top:1px solid rgba(255,255,255,0.03)">
+    Sidekick není schválen ani sponzorován společností Riot Games. Riot Games a všechny související názvy jsou ochranné známky Riot Games, Inc.
+  </div>
+
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Načítám data...</div>
+</div>
+
+<script src="champ_select.js"></script>
+<script>
+(function(){
+  var tb = document.getElementById("titlebar");
+  tb.addEventListener("mousedown", function(e){
+    if(e.target.tagName==="BUTTON") return;
+    overwolf.windows.getCurrentWindow(function(r){
+      if(r.success) overwolf.windows.dragMove(r.window.id);
+    });
+  });
+})();
+
+overwolf.utils.getMonitorsList(function(res){
+  var m = res && res.displays;
+  var b = document.getElementById("monitor-badge");
+  if(m && m.length >= 2){ b.textContent = "Monitor 2 · " + m[1].width + "×" + m[1].height; }
+  else b.style.display = "none";
+});
+</script>
+</body>
+</html>
